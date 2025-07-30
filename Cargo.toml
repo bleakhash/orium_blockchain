@@ -65,7 +65,7 @@ sp-consensus-grandpa = { version = "21.0.0", default-features = false }
 sp-core = { version = "37.0.0", default-features = false }
 sp-genesis-builder = { version = "0.18.0", default-features = false }
 sp-inherents = { version = "37.0.0", default-features = false }
-sp-io = { version = "37.0.0", default-features = false }
+sp-io = { version = "41.0.1", default-features = false }
 sp-keyring = { version = "37.0.0", default-features = false }
 sp-offchain = { version = "37.0.0", default-features = false }
 sp-runtime = { version = "37.0.0", default-features = false }

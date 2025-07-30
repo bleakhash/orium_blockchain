@@ -87,12 +87,12 @@ The stablecoins use a MakerDAO-style CDP (Collateralized Debt Position) system:
 import { ApiPromise, WsProvider } from '@polkadot/api';
 import { Keyring } from '@polkadot/keyring';
 
-// Connect to ORIUM node
+// Connect to ORIUM node (development or devnet)
 const wsProvider = new WsProvider('ws://localhost:9944');
 const api = await ApiPromise.create({ provider: wsProvider });
 
-// Create keyring
-const keyring = new Keyring({ type: 'sr25519' });
+// Create keyring with ORIUM's "or" address prefix
+const keyring = new Keyring({ type: 'sr25519', ss58Format: 111 });
 const account = keyring.addFromUri('//Alice');
 ```
 
@@ -114,11 +114,17 @@ console.log(`Free Balance: ${accountInfo.data.free.toString()}`);
 // Transfer 1000 ORM tokens
 const transfer = api.tx.oriumToken.transfer(
   'orRecipientAddress...', 
-  1000 * 10**18  // 1000 ORM (18 decimals)
+  1000n * 10n**18n  // 1000 ORM (18 decimals)
 );
 
 const hash = await transfer.signAndSend(account);
 console.log(`Transfer hash: ${hash.toString()}`);
+
+// Via Polkadot-JS Apps UI:
+// 1. Navigate to http://localhost:9944
+// 2. Go to Extrinsics tab
+// 3. Select oriumToken.transfer
+// 4. Enter recipient address and amount
 ```
 
 #### Approve Spending

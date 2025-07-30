@@ -102,8 +102,8 @@ brew install cmake pkg-config openssl protobuf git
 
 #### 1. Clone Repository
 ```bash
-git clone https://github.com/your-org/orium-blockchain.git
-cd orium-blockchain
+git clone https://github.com/bleakhash/orium_blockchain.git
+cd orium_blockchain
 ```
 
 #### 2. Build Release Binary
@@ -129,7 +129,7 @@ Download the latest release from GitHub:
 
 ```bash
 # Download latest release
-wget https://github.com/your-org/orium-blockchain/releases/latest/download/orium-blockchain-release.tar.gz
+wget https://github.com/bleakhash/orium_blockchain/releases/latest/download/orium-blockchain-release.tar.gz
 
 # Extract
 tar -xzf orium-blockchain-release.tar.gz
@@ -150,20 +150,21 @@ Follow the official Docker installation guide for your OS:
 - [macOS](https://docs.docker.com/desktop/mac/install/)
 - [Windows](https://docs.docker.com/desktop/windows/install/)
 
-#### Pull ORIUM Image
+#### Build and Run with Docker Compose
 ```bash
-docker pull orium/blockchain-node:latest
-```
+# Start 4-validator devnet
+cd docker/devnet
+./start-devnet.sh
 
-#### Run Container
-```bash
+# Or build individual node
+docker build -t orium-node .
 docker run -d \
   --name orium-node \
   -p 9933:9933 \
   -p 9944:9944 \
   -p 30333:30333 \
   -v orium-data:/data \
-  orium/blockchain-node:latest \
+  orium-node:latest \
   --dev --tmp
 ```
 
@@ -329,9 +330,9 @@ RUST_LOG=runtime=debug,babe=trace orium-node --dev
 ```
 
 2. **Community Support**
-- GitHub Issues: [Report bugs and ask questions](https://github.com/your-org/orium-blockchain/issues)
-- Discord: [Join our community](https://discord.gg/orium)
-- Documentation: [Read the docs](https://docs.orium.network)
+- GitHub Issues: [Report bugs and ask questions](https://github.com/bleakhash/orium_blockchain/issues)
+- GitHub Discussions: [Join our community](https://github.com/bleakhash/orium_blockchain/discussions)
+- Documentation: [Read the docs](https://docs.substrate.io/)
 
 3. **Professional Support**
 Contact the ORIUM team for enterprise support and consulting services.
@@ -340,11 +341,11 @@ Contact the ORIUM team for enterprise support and consulting services.
 
 After successful installation:
 
-1. **Read the Node Setup Guide**: [NODE_SETUP.md](NODE_SETUP.md)
-2. **Learn Token Operations**: [TOKEN_USAGE.md](TOKEN_USAGE.md)
-3. **Explore Stablecoins**: [STABLECOIN_GUIDE.md](STABLECOIN_GUIDE.md)
-4. **Join the Network**: [VALIDATOR_GUIDE.md](VALIDATOR_GUIDE.md)
-5. **Development**: [DEVELOPMENT.md](DEVELOPMENT.md)
+1. **Learn Token Operations**: [TOKEN_USAGE.md](TOKEN_USAGE.md)
+2. **Explore Architecture**: [ARCHITECTURE.md](ARCHITECTURE.md)
+3. **Start Development**: Run `cargo test --workspace` to verify setup
+4. **Launch Devnet**: `cd docker/devnet && ./start-devnet.sh`
+5. **Run Benchmarks**: `./benchmark-tps.sh` for performance testing
 
 ## Security Considerations
 

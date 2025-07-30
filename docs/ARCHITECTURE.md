@@ -575,8 +575,8 @@ pub const LIQUIDATOR_REWARD: Percent = Percent::from_percent(10);
 ```rust
 // Bootstrap nodes for network discovery
 pub const BOOTNODES: &[&str] = &[
-    "/dns/bootnode1.orium.network/tcp/30333/p2p/12D3KooW...",
-    "/dns/bootnode2.orium.network/tcp/30333/p2p/12D3KooW...",
+    "/ip4/127.0.0.1/tcp/30333/p2p/12D3KooW...", // Local devnet
+    "/ip4/127.0.0.1/tcp/30334/p2p/12D3KooW...", // Local devnet
 ];
 ```
 
@@ -617,6 +617,21 @@ pub fn health_check() -> HealthStatus {
 ### Token Economics
 
 #### 1. ORM Token Distribution
+- **Development**: 40% (for testing and initial distribution)
+- **Validators**: 30% (for staking and network security)
+- **Treasury**: 20% (for development and ecosystem growth)
+- **Community**: 10% (for airdrops and incentives)
+
+#### 2. Stablecoin Mechanics
+- **dUSD**: USD-pegged stablecoin backed by ORM collateral
+- **dEUR**: EUR-pegged stablecoin backed by ORM collateral
+- **Collateral Ratio**: Minimum 150%, liquidation at 130%
+- **Stability Fee**: 2% annually on outstanding debt
+
+#### 3. Liquidation Economics
+- **Liquidation Penalty**: 13% of collateral value
+- **Liquidator Reward**: 10% of collateral value
+- **System Stability**: 3% goes to treasury for system stability
 - **Validators**: 40% (staking rewards)
 - **Treasury**: 30% (development fund)
 - **Community**: 20% (airdrops, incentives)

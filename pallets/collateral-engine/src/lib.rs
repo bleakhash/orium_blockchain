@@ -308,6 +308,122 @@ pub mod pallet {
 
             Ok(())
         }
+
+        #[pallet::call_index(5)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn liquidate(origin: OriginFor<T>, cdp_owner: T::AccountId) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let cdp = Cdps::<T>::get(&cdp_owner).ok_or(Error::<T>::CdpNotFound)?;
+
+            let orm_usd_price = OrmUsdPrice::<T>::get();
+            let orm_eur_price = OrmEurPrice::<T>::get();
+
+            ensure!(!orm_usd_price.is_zero(), Error::<T>::PriceNotAvailable);
+            ensure!(!orm_eur_price.is_zero(), Error::<T>::PriceNotAvailable);
+
+            let collateral_value_usd = (cdp.collateral.saturated_into::<u128>())
+                .saturating_mul(orm_usd_price)
+                .saturating_div(1_000_000_000_000_000_000u128);
+
+            let dusd_debt_value = cdp.dusd_debt.saturated_into::<u128>();
+            let deur_debt_value_usd = (cdp.deur_debt.saturated_into::<u128>())
+                .saturating_mul(orm_eur_price)
+                .saturating_div(orm_usd_price);
+
+            let total_debt_usd = dusd_debt_value.saturating_add(deur_debt_value_usd);
+
+            if !total_debt_usd.is_zero() {
+                let ratio = collateral_value_usd
+                    .saturating_mul(10000u128)
+                    .saturating_div(total_debt_usd);
+
+                ensure!(ratio < T::LiquidationRatio::get() as u128, Error::<T>::CdpNotLiquidatable);
+            }
+
+            T::Currency::unreserve(&cdp_owner, cdp.collateral);
+
+            // Update totals
+            TotalCollateral::<T>::mutate(|total| *total = total.saturating_sub(cdp.collateral));
+            TotalDusdDebt::<T>::mutate(|total| *total = total.saturating_sub(cdp.dusd_debt));
+            TotalDeurDebt::<T>::mutate(|total| *total = total.saturating_sub(cdp.deur_debt));
+
+            Cdps::<T>::remove(&cdp_owner);
+            LiquidationQueue::<T>::remove(&cdp_owner);
+
+            Self::deposit_event(Event::CdpLiquidated {
+                owner: cdp_owner,
+                liquidator: who,
+                collateral_seized: cdp.collateral,
+            });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(6)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn mint_deur(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            let new_deur_debt = cdp.deur_debt.saturating_add(amount);
+
+            ensure!(
+                Self::check_collateral_ratio(&who, cdp.collateral, cdp.dusd_debt, new_deur_debt)?,
+                Error::<T>::CollateralRatioTooLow
+            );
+
+            cdp.deur_debt = new_deur_debt;
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalDeurDebt::<T>::mutate(|total| *total = total.saturating_add(amount));
+
+            Self::deposit_event(Event::DeurMinted { owner: who, amount });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(7)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn repay_dusd(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            ensure!(cdp.dusd_debt >= amount, Error::<T>::InsufficientDebt);
+
+            cdp.dusd_debt = cdp.dusd_debt.saturating_sub(amount);
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalDusdDebt::<T>::mutate(|total| *total = total.saturating_sub(amount));
+
+            Self::deposit_event(Event::DusdRepaid { owner: who, amount });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(8)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn repay_deur(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            ensure!(cdp.deur_debt >= amount, Error::<T>::InsufficientDebt);
+
+            cdp.deur_debt = cdp.deur_debt.saturating_sub(amount);
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalDeurDebt::<T>::mutate(|total| *total = total.saturating_sub(amount));
+
+            Self::deposit_event(Event::DeurRepaid { owner: who, amount });
+
+            Ok(())
+        }
     }
 
     impl<T: Config> Pallet<T> {

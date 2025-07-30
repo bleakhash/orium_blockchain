@@ -60,7 +60,7 @@ sc-transaction-pool-api = { version = "37.0.0" }
 sp-api = { version = "37.0.0", default-features = false }
 sp-block-builder = { version = "37.0.0", default-features = false }
 sp-blockchain = { version = "37.0.0" }
-sp-consensus-babe = { version = "0.37.0", default-features = false }
+sp-consensus-babe = { version = "0.40.0", default-features = false }
 sp-consensus-grandpa = { version = "21.0.0", default-features = false }
 sp-core = { version = "37.0.0", default-features = false }
 sp-genesis-builder = { version = "0.18.0", default-features = false }

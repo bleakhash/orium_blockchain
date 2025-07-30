@@ -56,11 +56,11 @@ pub mod pallet {
 	use super::*;
 	use frame_support::{
 		pallet_prelude::*,
-		traits::{Currency, Get, ReservableCurrency},
+		traits::{Get, ReservableCurrency},
 	};
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating, Zero};
-	use sp_std::{fmt::Debug, vec::Vec};
+	use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating, SaturatedConversion, Zero};
+	use sp_std::vec::Vec;
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.
@@ -76,7 +76,7 @@ pub mod pallet {
 		/// A type representing the weights required by the dispatchables of this pallet.
 		type WeightInfo: WeightInfo;
 		type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize + MaxEncodedLen;
-		type Currency: Currency<Self::AccountId, Balance = Self::Balance>;
+		type Currency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
 		type MinCollateralRatio: Get<u32>;
 		type LiquidationRatio: Get<u32>;
 		type StabilityFee: Get<u32>;
@@ -94,19 +94,19 @@ pub mod pallet {
 	pub type Cdps<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Cdp<T::Balance>, OptionQuery>;
 
 	#[pallet::storage]
-	pub type TotalCollateral<T> = StorageValue<_, T::Balance, ValueQuery>;
+	pub type TotalCollateral<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	#[pallet::storage]
-	pub type TotalDusdDebt<T> = StorageValue<_, T::Balance, ValueQuery>;
+	pub type TotalDusdDebt<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	#[pallet::storage]
-	pub type TotalDeurDebt<T> = StorageValue<_, T::Balance, ValueQuery>;
+	pub type TotalDeurDebt<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	#[pallet::storage]
-	pub type OrmUsdPrice<T> = StorageValue<_, u128, ValueQuery>;
+	pub type OrmUsdPrice<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
-	pub type OrmEurPrice<T> = StorageValue<_, u128, ValueQuery>;
+	pub type OrmEurPrice<T: Config> = StorageValue<_, u128, ValueQuery>;
 
 	#[pallet::storage]
 	pub type LiquidationQueue<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, bool, ValueQuery>;
@@ -341,7 +341,7 @@ pub mod pallet {
 				.saturating_mul(10000u128)
 				.saturating_div(total_debt_usd);
 			
-			Ok(ratio >= T::MinCollateralRatio::get() as u128)
+			Ok(ratio >= T::MinCollateralRatio::get().into())
 		}
 	}
 }

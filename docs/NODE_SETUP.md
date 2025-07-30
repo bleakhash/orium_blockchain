@@ -1,591 +1,557 @@
-# ORIUM Node Setup Guide
+# Node Setup Guide
 
-This comprehensive guide covers setting up and operating ORIUM blockchain nodes in various configurations, from development to production validator nodes.
+This guide covers setting up ORIUM blockchain nodes in different configurations: development, validator, and archive nodes.
 
-## Table of Contents
+## Overview
 
-- [Node Types](#node-types)
-- [Development Setup](#development-setup)
-- [Full Node Setup](#full-node-setup)
-- [Validator Setup](#validator-setup)
-- [Network Configuration](#network-configuration)
-- [Monitoring](#monitoring)
-- [Maintenance](#maintenance)
-- [Troubleshooting](#troubleshooting)
+ORIUM blockchain supports multiple node types:
 
-## Node Types
+- **Development Node**: Single-node setup for testing and development
+- **Validator Node**: Participates in consensus and block production
+- **Full Node**: Syncs with the network but doesn't validate
+- **Archive Node**: Stores complete blockchain history
+- **Light Client**: Minimal resource usage for basic operations
 
-### 1. Development Node
-- Single node for testing and development
-- Uses `--dev` flag with temporary storage
-- Pre-funded accounts (Alice, Bob, etc.)
-- Fast block production for testing
+## Development Node Setup
 
-### 2. Full Node
-- Participates in network without validating
-- Maintains full blockchain state
-- Serves RPC requests
-- Helps with network decentralization
+### Single Development Node
 
-### 3. Validator Node
-- Produces blocks and participates in consensus
-- Requires staking and session keys
-- Higher hardware requirements
-- Earns rewards for honest behavior
+The simplest way to start experimenting with ORIUM:
 
-### 4. Archive Node
-- Stores complete historical state
-- Larger storage requirements
-- Useful for block explorers and analytics
-- Slower sync but complete data
-
-## Development Setup
-
-### Quick Start
 ```bash
-# Start development node with temporary storage
-orium-node --dev --tmp
+# Start development node
+./target/release/solochain-template-node --dev
 
-# Start with persistent storage
-orium-node --dev --base-path ~/.local/share/orium-dev
+# With custom data directory
+./target/release/solochain-template-node --dev \
+    --base-path /tmp/orium-dev
+
+# With RPC access from external hosts
+./target/release/solochain-template-node --dev \
+    --rpc-external \
+    --rpc-cors all \
+    --rpc-methods unsafe
 ```
 
-### Development Configuration
+### Development Node Features
+
+- Pre-funded accounts (Alice, Bob, Charlie, etc.)
+- Instant block production
+- No peer connections required
+- Suitable for testing and development
+
+### Accessing Development Node
+
 ```bash
-orium-node \
-  --dev \
-  --base-path ~/.local/share/orium-dev \
-  --name "ORIUM-Dev" \
-  --rpc-cors all \
-  --unsafe-rpc-external \
-  --unsafe-ws-external \
-  --rpc-methods unsafe \
-  --log info,runtime::system=debug
+# Check node health
+curl -H "Content-Type: application/json" -d '{
+    "id":1, 
+    "jsonrpc":"2.0", 
+    "method":"system_health"
+}' http://localhost:9933
+
+# Get node info
+curl -H "Content-Type: application/json" -d '{
+    "id":1, 
+    "jsonrpc":"2.0", 
+    "method":"system_name"
+}' http://localhost:9933
 ```
 
-### Development Features
-- **Pre-funded Accounts**: Alice, Bob, Charlie, Dave, Eve, Ferdie
-- **Fast Blocks**: 2-second block time
-- **Instant Finality**: No need to wait for finalization
-- **RPC Access**: All RPC methods enabled
-- **Hot Reloading**: Runtime upgrades without restart
-
-### Useful Development Commands
-```bash
-# Reset development chain
-rm -rf ~/.local/share/orium-dev
-
-# Start with custom block time
-orium-node --dev --tmp --dev-block-time 1000
-
-# Enable detailed logging
-RUST_LOG=debug orium-node --dev --tmp
-```
-
-## Full Node Setup
-
-### Basic Full Node
-```bash
-orium-node \
-  --name "ORIUM-FullNode" \
-  --chain mainnet \
-  --base-path ~/.local/share/orium-node \
-  --port 30333 \
-  --rpc-port 9933 \
-  --ws-port 9944 \
-  --bootnodes /dns/bootnode1.orium.network/tcp/30333/p2p/12D3KooW... \
-  --bootnodes /dns/bootnode2.orium.network/tcp/30333/p2p/12D3KooW...
-```
-
-### RPC-Enabled Full Node
-```bash
-orium-node \
-  --name "ORIUM-RPC" \
-  --chain mainnet \
-  --base-path ~/.local/share/orium-node \
-  --port 30333 \
-  --rpc-port 9933 \
-  --ws-port 9944 \
-  --rpc-cors all \
-  --unsafe-rpc-external \
-  --unsafe-ws-external \
-  --rpc-methods safe \
-  --max-runtime-instances 32 \
-  --rpc-max-connections 1000
-```
-
-### Archive Full Node
-```bash
-orium-node \
-  --name "ORIUM-Archive" \
-  --chain mainnet \
-  --base-path ~/.local/share/orium-archive \
-  --port 30333 \
-  --rpc-port 9933 \
-  --ws-port 9944 \
-  --pruning archive \
-  --state-cache-size 1073741824  # 1GB state cache
-```
-
-## Validator Setup
+## Validator Node Setup
 
 ### Prerequisites
-- Stable internet connection (99.9% uptime)
+
+- Stable internet connection
 - Sufficient hardware resources
-- ORM tokens for staking
-- Session keys generated
+- Unique node key for each validator
 
 ### Hardware Requirements
 
-#### Minimum
-- **CPU**: 4 cores, 2.5 GHz
-- **RAM**: 8 GB
-- **Storage**: 200 GB SSD
-- **Network**: 100 Mbps, <100ms latency
+**Minimum:**
+- CPU: 4 cores
+- RAM: 8GB
+- Storage: 100GB SSD
+- Network: 100 Mbps
 
-#### Recommended
-- **CPU**: 8 cores, 3.0 GHz
-- **RAM**: 32 GB
-- **Storage**: 1 TB NVMe SSD
-- **Network**: 1 Gbps, <50ms latency
+**Recommended:**
+- CPU: 8+ cores
+- RAM: 16GB+
+- Storage: 500GB+ NVMe SSD
+- Network: 1 Gbps
 
-### Step 1: Generate Session Keys
+### Generate Node Keys
 
-#### Method 1: RPC Call
 ```bash
-# Start node first
-orium-node \
-  --validator \
-  --name "ORIUM-Validator" \
-  --chain mainnet \
-  --base-path ~/.local/share/orium-validator
+# Generate a new node key
+./target/release/solochain-template-node key generate-node-key
 
-# Generate keys via RPC
-curl -H "Content-Type: application/json" \
-     -d '{"id":1, "jsonrpc":"2.0", "method": "author_rotateKeys", "params":[]}' \
-     http://localhost:9933
+# Output example: 0x1234567890abcdef...
+# Save this key securely - it identifies your node
 ```
 
-#### Method 2: Subkey Tool
+### Create Chain Specification
+
 ```bash
-# Install subkey
-cargo install --force subkey --git https://github.com/paritytech/substrate
+# Generate local testnet spec
+./target/release/solochain-template-node build-spec \
+    --chain local \
+    --disable-default-bootnode > local-spec.json
 
-# Generate BABE key
-subkey generate --scheme sr25519 --output-type json
-
-# Generate GRANDPA key
-subkey generate --scheme ed25519 --output-type json
-
-# Generate ImOnline key
-subkey generate --scheme sr25519 --output-type json
+# Convert to raw format (required for production)
+./target/release/solochain-template-node build-spec \
+    --chain local-spec.json \
+    --raw > local-spec-raw.json
 ```
 
-### Step 2: Insert Keys into Keystore
+### Start Validator Node
+
 ```bash
+# Start validator with generated key
+./target/release/solochain-template-node \
+    --chain local-spec-raw.json \
+    --validator \
+    --base-path /data/orium-validator \
+    --node-key 0x1234567890abcdef... \
+    --port 30333 \
+    --rpc-port 9933 \
+    --name "ORIUM-Validator-1" \
+    --telemetry-url "wss://telemetry.polkadot.io/submit/ 0"
+```
+
+### Validator Configuration Options
+
+```bash
+# Full validator configuration
+./target/release/solochain-template-node \
+    --chain local-spec-raw.json \
+    --validator \
+    --base-path /data/orium-validator \
+    --node-key-file /secure/path/node-key \
+    --keystore-path /secure/path/keystore \
+    --port 30333 \
+    --rpc-port 9933 \
+    --ws-port 9944 \
+    --prometheus-port 9615 \
+    --name "ORIUM-Validator-1" \
+    --max-peers 50 \
+    --in-peers 25 \
+    --out-peers 25 \
+    --pool-limit 8192 \
+    --pool-kbytes 32768 \
+    --pruning 1000 \
+    --state-cache-size 1073741824
+```
+
+## Multi-Validator Network
+
+### 4-Validator Local Network
+
+#### Validator 1 (Bootnode)
+
+```bash
+./target/release/solochain-template-node \
+    --chain local-spec-raw.json \
+    --validator \
+    --base-path /tmp/validator1 \
+    --node-key 0000000000000000000000000000000000000000000000000000000000000001 \
+    --port 30333 \
+    --rpc-port 9933 \
+    --name "validator-1"
+```
+
+#### Validator 2
+
+```bash
+./target/release/solochain-template-node \
+    --chain local-spec-raw.json \
+    --validator \
+    --base-path /tmp/validator2 \
+    --node-key 0000000000000000000000000000000000000000000000000000000000000002 \
+    --port 30334 \
+    --rpc-port 9934 \
+    --name "validator-2" \
+    --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+```
+
+#### Validator 3
+
+```bash
+./target/release/solochain-template-node \
+    --chain local-spec-raw.json \
+    --validator \
+    --base-path /tmp/validator3 \
+    --node-key 0000000000000000000000000000000000000000000000000000000000000003 \
+    --port 30335 \
+    --rpc-port 9935 \
+    --name "validator-3" \
+    --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+```
+
+#### Validator 4
+
+```bash
+./target/release/solochain-template-node \
+    --chain local-spec-raw.json \
+    --validator \
+    --base-path /tmp/validator4 \
+    --node-key 0000000000000000000000000000000000000000000000000000000000000004 \
+    --port 30336 \
+    --rpc-port 9936 \
+    --name "validator-4" \
+    --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+```
+
+## Key Management
+
+### Session Keys
+
+Validators need session keys for BABE and GRANDPA consensus:
+
+```bash
+# Generate session keys
+curl -H "Content-Type: application/json" -d '{
+    "id":1, 
+    "jsonrpc":"2.0", 
+    "method":"author_rotateKeys"
+}' http://localhost:9933
+
 # Insert BABE key
-curl -H "Content-Type: application/json" \
-     -d '{"id":1, "jsonrpc":"2.0", "method": "author_insertKey", "params":["babe","YOUR_SEED","YOUR_PUBLIC_KEY"]}' \
-     http://localhost:9933
+./target/release/solochain-template-node key insert \
+    --base-path /tmp/validator1 \
+    --chain local-spec-raw.json \
+    --scheme Sr25519 \
+    --suri "//Alice" \
+    --key-type babe
 
 # Insert GRANDPA key
-curl -H "Content-Type: application/json" \
-     -d '{"id":1, "jsonrpc":"2.0", "method": "author_insertKey", "params":["gran","YOUR_SEED","YOUR_PUBLIC_KEY"]}' \
-     http://localhost:9933
-
-# Insert ImOnline key
-curl -H "Content-Type: application/json" \
-     -d '{"id":1, "jsonrpc":"2.0", "method": "author_insertKey", "params":["imon","YOUR_SEED","YOUR_PUBLIC_KEY"]}' \
-     http://localhost:9933
+./target/release/solochain-template-node key insert \
+    --base-path /tmp/validator1 \
+    --chain local-spec-raw.json \
+    --scheme Ed25519 \
+    --suri "//Alice" \
+    --key-type gran
 ```
 
-### Step 3: Validator Configuration
+### Key Security
+
+**Production Best Practices:**
+
+1. **Hardware Security Modules (HSM)**: Use HSM for key storage
+2. **Key Rotation**: Regularly rotate session keys
+3. **Backup Strategy**: Secure backup of node keys
+4. **Access Control**: Limit access to key files
+
 ```bash
-orium-node \
-  --validator \
-  --name "ORIUM-Validator-1" \
-  --chain mainnet \
-  --base-path ~/.local/share/orium-validator \
-  --port 30333 \
-  --rpc-port 9933 \
-  --ws-port 9944 \
-  --telemetry-url "wss://telemetry.polkadot.io/submit/ 0" \
-  --bootnodes /dns/bootnode1.orium.network/tcp/30333/p2p/12D3KooW... \
-  --prometheus-external \
-  --prometheus-port 9615
+# Secure key file permissions
+chmod 600 /secure/path/node-key
+chown validator:validator /secure/path/node-key
+
+# Create secure keystore directory
+mkdir -p /secure/keystore
+chmod 700 /secure/keystore
 ```
 
-### Step 4: Set Session Keys On-Chain
-Using Polkadot.js Apps or custom script:
-```javascript
-// Set session keys
-const setKeys = api.tx.session.setKeys(sessionKeys, proof);
-await setKeys.signAndSend(validatorAccount);
-```
+## Archive Node Setup
 
-### Step 5: Start Validating
-```javascript
-// Bond tokens and nominate yourself
-const bond = api.tx.staking.bond(controller, amount, 'Staked');
-const validate = api.tx.staking.validate({
-  commission: 1000000, // 1% commission (in parts per billion)
-  blocked: false
-});
+Archive nodes store complete blockchain history:
 
-const batch = api.tx.utility.batch([bond, validate]);
-await batch.signAndSend(stashAccount);
-```
-
-## Network Configuration
-
-### Firewall Setup
-
-#### UFW (Ubuntu)
 ```bash
-# Allow SSH
-sudo ufw allow 22
-
-# Allow P2P port
-sudo ufw allow 30333
-
-# Allow RPC (only if needed publicly)
-sudo ufw allow 9933
-sudo ufw allow 9944
-
-# Enable firewall
-sudo ufw enable
+./target/release/solochain-template-node \
+    --chain local-spec-raw.json \
+    --base-path /data/orium-archive \
+    --pruning archive \
+    --rpc-external \
+    --rpc-cors all \
+    --rpc-methods safe \
+    --name "ORIUM-Archive" \
+    --max-peers 100
 ```
 
-#### iptables
-```bash
-# Allow P2P
-sudo iptables -A INPUT -p tcp --dport 30333 -j ACCEPT
+### Archive Node Benefits
 
-# Allow RPC (be careful with public access)
-sudo iptables -A INPUT -p tcp --dport 9933 -j ACCEPT
-sudo iptables -A INPUT -p tcp --dport 9944 -j ACCEPT
+- Complete transaction history
+- Historical state queries
+- Block explorer backend
+- Research and analytics
 
-# Save rules
-sudo iptables-save > /etc/iptables/rules.v4
-```
-
-### Reverse Proxy (Nginx)
-
-#### Install Nginx
-```bash
-sudo apt install nginx
-```
-
-#### Configure RPC Proxy
-```nginx
-# /etc/nginx/sites-available/orium-rpc
-server {
-    listen 80;
-    server_name rpc.yourdomain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:9933;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-
-# WebSocket proxy
-server {
-    listen 80;
-    server_name ws.yourdomain.com;
-
-    location / {
-        proxy_pass http://127.0.0.1:9944;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-    }
-}
-```
-
-#### Enable Site
-```bash
-sudo ln -s /etc/nginx/sites-available/orium-rpc /etc/nginx/sites-enabled/
-sudo nginx -t
-sudo systemctl reload nginx
-```
-
-### SSL/TLS with Let's Encrypt
-```bash
-# Install certbot
-sudo apt install certbot python3-certbot-nginx
-
-# Get certificates
-sudo certbot --nginx -d rpc.yourdomain.com -d ws.yourdomain.com
-
-# Auto-renewal
-sudo crontab -e
-# Add: 0 12 * * * /usr/bin/certbot renew --quiet
-```
-
-## Monitoring
+## Monitoring and Maintenance
 
 ### Prometheus Metrics
 
-#### Enable Metrics
 ```bash
-orium-node \
-  --validator \
-  --prometheus-external \
-  --prometheus-port 9615
+# Enable Prometheus metrics
+./target/release/solochain-template-node \
+    --validator \
+    --prometheus-external \
+    --prometheus-port 9615
 ```
 
-#### Prometheus Configuration
-```yaml
-# prometheus.yml
-global:
-  scrape_interval: 15s
+### Health Checks
 
-scrape_configs:
-  - job_name: 'orium-node'
-    static_configs:
-      - targets: ['localhost:9615']
-    scrape_interval: 5s
-```
-
-### Grafana Dashboard
-
-#### Key Metrics to Monitor
-- Block height and sync status
-- Peer connections
-- Memory and CPU usage
-- Disk I/O and space
-- Network traffic
-- Validator performance (if applicable)
-
-#### Sample Queries
-```promql
-# Block height
-substrate_block_height{instance="localhost:9615"}
+```bash
+# Node health
+curl http://localhost:9933 -d '{
+    "id":1, 
+    "jsonrpc":"2.0", 
+    "method":"system_health"
+}'
 
 # Peer count
-substrate_sub_libp2p_peers_count{instance="localhost:9615"}
+curl http://localhost:9933 -d '{
+    "id":1, 
+    "jsonrpc":"2.0", 
+    "method":"system_peers"
+}'
 
-# Memory usage
-process_resident_memory_bytes{instance="localhost:9615"}
-
-# Validator status
-substrate_node_is_active_validator{instance="localhost:9615"}
+# Sync status
+curl http://localhost:9933 -d '{
+    "id":1, 
+    "jsonrpc":"2.0", 
+    "method":"system_syncState"
+}'
 ```
 
-### Log Monitoring
+### Log Management
 
-#### Structured Logging
 ```bash
-# JSON logging for better parsing
-orium-node --validator --log json
+# Set log levels
+export RUST_LOG=info,sc_consensus_babe=debug
 
-# Specific log levels
-orium-node --validator --log info,runtime::system=debug,babe=trace
-```
+# Log to file
+./target/release/solochain-template-node --validator 2>&1 | tee validator.log
 
-#### Log Rotation
-```bash
-# Install logrotate configuration
-sudo tee /etc/logrotate.d/orium-node << EOF
-/var/log/orium-node.log {
+# Rotate logs with logrotate
+sudo tee /etc/logrotate.d/orium-validator << EOF
+/var/log/orium-validator.log {
     daily
     rotate 30
     compress
     delaycompress
     missingok
     notifempty
-    create 644 orium orium
-    postrotate
-        systemctl reload orium-node
-    endscript
+    create 644 validator validator
 }
 EOF
 ```
 
-## Maintenance
+## Network Configuration
 
-### System Service Setup
+### Firewall Setup
 
-#### Create Service File
 ```bash
-sudo tee /etc/systemd/system/orium-node.service << EOF
-[Unit]
-Description=ORIUM Blockchain Node
-After=network.target
+# Allow P2P port
+sudo ufw allow 30333/tcp
 
-[Service]
-Type=simple
-User=orium
-Group=orium
-WorkingDirectory=/home/orium
-ExecStart=/usr/local/bin/orium-node \\
-  --validator \\
-  --name "ORIUM-Validator" \\
-  --chain mainnet \\
-  --base-path /home/orium/.local/share/orium-node \\
-  --port 30333 \\
-  --rpc-port 9933 \\
-  --ws-port 9944 \\
-  --prometheus-external \\
-  --prometheus-port 9615
-Restart=always
-RestartSec=10
-LimitNOFILE=65536
+# Allow RPC port (be careful with external access)
+sudo ufw allow from 10.0.0.0/8 to any port 9933
 
-[Install]
-WantedBy=multi-user.target
-EOF
+# Allow WebSocket port
+sudo ufw allow from 10.0.0.0/8 to any port 9944
+
+# Allow Prometheus metrics
+sudo ufw allow from 10.0.0.0/8 to any port 9615
 ```
 
-#### Enable and Start Service
+### NAT and Port Forwarding
+
+For validators behind NAT:
+
 ```bash
-sudo systemctl daemon-reload
-sudo systemctl enable orium-node
-sudo systemctl start orium-node
-sudo systemctl status orium-node
+# Use external IP
+./target/release/solochain-template-node \
+    --validator \
+    --public-addr /ip4/YOUR_PUBLIC_IP/tcp/30333
+
+# Or use automatic discovery
+./target/release/solochain-template-node \
+    --validator \
+    --discover-local
 ```
 
-### Backup Procedures
+## Performance Tuning
 
-#### Database Backup
+### System Optimization
+
 ```bash
-# Stop node
-sudo systemctl stop orium-node
+# Increase file descriptor limits
+echo "* soft nofile 65536" | sudo tee -a /etc/security/limits.conf
+echo "* hard nofile 65536" | sudo tee -a /etc/security/limits.conf
 
-# Create backup
-tar -czf orium-backup-$(date +%Y%m%d).tar.gz ~/.local/share/orium-node/
-
-# Restart node
-sudo systemctl start orium-node
+# Optimize network settings
+echo "net.core.rmem_max = 134217728" | sudo tee -a /etc/sysctl.conf
+echo "net.core.wmem_max = 134217728" | sudo tee -a /etc/sysctl.conf
+sudo sysctl -p
 ```
 
-#### Key Backup
+### Node Optimization
+
 ```bash
-# Backup keystore
-cp -r ~/.local/share/orium-node/keystore ~/orium-keystore-backup
-
-# Backup node key
-cp ~/.local/share/orium-node/network/secret_ed25519 ~/node-key-backup
+# High-performance configuration
+./target/release/solochain-template-node \
+    --validator \
+    --pool-limit 8192 \
+    --pool-kbytes 32768 \
+    --max-runtime-instances 32 \
+    --runtime-cache-size 64 \
+    --state-cache-size 1073741824 \
+    --db-cache 2048
 ```
-
-### Updates
-
-#### Binary Updates
-```bash
-# Stop node
-sudo systemctl stop orium-node
-
-# Backup current binary
-sudo cp /usr/local/bin/orium-node /usr/local/bin/orium-node.backup
-
-# Install new binary
-sudo cp target/release/orium-node /usr/local/bin/
-
-# Start node
-sudo systemctl start orium-node
-
-# Check logs
-sudo journalctl -u orium-node -f
-```
-
-#### Runtime Updates
-Runtime updates are performed on-chain via governance and don't require node restarts.
 
 ## Troubleshooting
 
 ### Common Issues
 
-#### 1. Sync Problems
+**Node won't start:**
 ```bash
-# Check sync status
-curl -H "Content-Type: application/json" \
-     -d '{"id":1, "jsonrpc":"2.0", "method": "system_syncState", "params":[]}' \
-     http://localhost:9933
+# Check port availability
+sudo netstat -tlnp | grep :30333
 
-# Force resync
-orium-node --validator --force-authoring --unsafe-force-authoring
+# Check permissions
+ls -la /data/orium-validator
+
+# Check disk space
+df -h /data
 ```
 
-#### 2. Peer Connection Issues
+**Sync issues:**
 ```bash
-# Check peer count
-curl -H "Content-Type: application/json" \
-     -d '{"id":1, "jsonrpc":"2.0", "method": "system_health", "params":[]}' \
-     http://localhost:9933
+# Clear database and resync
+rm -rf /data/orium-validator/chains/*/db/
 
-# Add more bootnodes
-orium-node --validator --bootnodes /ip4/1.2.3.4/tcp/30333/p2p/12D3KooW...
+# Check bootnodes
+./target/release/solochain-template-node \
+    --validator \
+    --bootnodes /ip4/127.0.0.1/tcp/30333/p2p/NODE_ID
 ```
 
-#### 3. Validator Not Producing Blocks
+**Performance issues:**
 ```bash
-# Check if keys are in keystore
-ls ~/.local/share/orium-node/keystore/
-
-# Verify session keys
-curl -H "Content-Type: application/json" \
-     -d '{"id":1, "jsonrpc":"2.0", "method": "author_hasSessionKeys", "params":["YOUR_SESSION_KEYS"]}' \
-     http://localhost:9933
-```
-
-#### 4. High Resource Usage
-```bash
-# Monitor resources
+# Monitor resource usage
 htop
 iotop
 nethogs
 
-# Adjust cache sizes
-orium-node --validator --state-cache-size 268435456  # 256MB
+# Check node metrics
+curl http://localhost:9615/metrics
 ```
 
-### Performance Tuning
+### Recovery Procedures
 
-#### Database Optimization
+**Database corruption:**
 ```bash
-# Use faster database backend
-orium-node --validator --database rocksdb
+# Backup current state
+cp -r /data/orium-validator /data/orium-validator.backup
 
-# Adjust cache sizes
-orium-node --validator \
-  --state-cache-size 1073741824 \  # 1GB state cache
-  --db-cache 2048                  # 2GB database cache
+# Clear corrupted database
+rm -rf /data/orium-validator/chains/*/db/
+
+# Restart node (will resync)
+./target/release/solochain-template-node --validator
 ```
 
-#### Network Optimization
+**Key recovery:**
 ```bash
-# Increase connection limits
-orium-node --validator \
-  --in-peers 50 \
-  --out-peers 50 \
-  --max-runtime-instances 32
+# Restore from backup
+cp /secure/backup/node-key /data/orium-validator/
+
+# Regenerate session keys
+curl -d '{"id":1,"jsonrpc":"2.0","method":"author_rotateKeys"}' \
+    http://localhost:9933
 ```
 
-### Getting Help
+## Systemd Service
 
-1. **Check Logs**: `sudo journalctl -u orium-node -f`
-2. **Community Support**: [Discord](https://discord.gg/orium)
-3. **GitHub Issues**: [Report problems](https://github.com/your-org/orium-blockchain/issues)
-4. **Documentation**: [Full docs](https://docs.orium.network)
+Create a systemd service for production deployment:
 
-## Security Best Practices
+```bash
+# Create service file
+sudo tee /etc/systemd/system/orium-validator.service << EOF
+[Unit]
+Description=ORIUM Validator Node
+After=network.target
 
-1. **Keep Software Updated**: Regular updates for security patches
-2. **Secure Key Management**: Hardware security modules for production
-3. **Network Security**: Proper firewall configuration
-4. **Monitoring**: 24/7 monitoring for validator nodes
-5. **Backup Strategy**: Regular backups of keys and data
-6. **Access Control**: Limit SSH access and use key-based authentication
+[Service]
+Type=simple
+User=validator
+Group=validator
+ExecStart=/usr/local/bin/solochain-template-node \\
+    --chain /etc/orium/local-spec-raw.json \\
+    --validator \\
+    --base-path /data/orium-validator \\
+    --node-key-file /etc/orium/node-key \\
+    --name "ORIUM-Validator-1"
+Restart=always
+RestartSec=10
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=orium-validator
 
-## Next Steps
+[Install]
+WantedBy=multi-user.target
+EOF
 
-- [Token Usage Guide](TOKEN_USAGE.md)
-- [Stablecoin Operations](STABLECOIN_GUIDE.md)
-- [Development Guide](DEVELOPMENT.md)
-- [API Reference](API_REFERENCE.md)
+# Enable and start service
+sudo systemctl enable orium-validator
+sudo systemctl start orium-validator
+
+# Check status
+sudo systemctl status orium-validator
+```
+
+## Docker Deployment
+
+### Single Validator
+
+```bash
+# Run validator in Docker
+docker run -d \
+    --name orium-validator \
+    -p 30333:30333 \
+    -p 9933:9933 \
+    -p 9944:9944 \
+    -v /data/orium:/data \
+    orium-node \
+    --chain local \
+    --validator \
+    --base-path /data \
+    --rpc-external \
+    --rpc-cors all
+```
+
+### Multi-Validator with Docker Compose
+
+See the provided `docker-compose.yml` for a complete 4-validator setup.
+
+## Security Considerations
+
+### Network Security
+
+1. **Firewall Configuration**: Restrict RPC access
+2. **VPN Access**: Use VPN for administrative access
+3. **DDoS Protection**: Implement rate limiting
+4. **Regular Updates**: Keep software updated
+
+### Operational Security
+
+1. **Key Management**: Secure key storage and rotation
+2. **Access Control**: Limit administrative access
+3. **Monitoring**: Continuous monitoring and alerting
+4. **Backup Strategy**: Regular backups of critical data
+
+### Incident Response
+
+1. **Monitoring Alerts**: Set up comprehensive alerting
+2. **Response Procedures**: Document incident response
+3. **Recovery Plans**: Test recovery procedures
+4. **Communication**: Establish communication channels
+
+## Support and Resources
+
+- [ORIUM Documentation](../README.md)
+- [Substrate Documentation](https://docs.substrate.io/)
+- [Polkadot Wiki](https://wiki.polkadot.network/)
+- [Community Discord](#)
+- [GitHub Issues](https://github.com/bleakhash/orium_blockchain/issues)
+
+For additional help with node setup, please refer to the troubleshooting section or reach out to the community.

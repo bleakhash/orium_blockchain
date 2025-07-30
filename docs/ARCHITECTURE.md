@@ -1,667 +1,416 @@
 # ORIUM Blockchain Architecture
 
-Comprehensive technical architecture documentation for the ORIUM blockchain, covering consensus, runtime design, pallet architecture, and performance optimizations.
-
-## Table of Contents
-
-- [Overview](#overview)
-- [Consensus Architecture](#consensus-architecture)
-- [Runtime Architecture](#runtime-architecture)
-- [Pallet Architecture](#pallet-architecture)
-- [Storage Design](#storage-design)
-- [Performance Optimizations](#performance-optimizations)
-- [Security Model](#security-model)
-- [Network Architecture](#network-architecture)
-- [Economic Model](#economic-model)
+This document provides a comprehensive overview of the ORIUM blockchain architecture, including consensus mechanisms, runtime design, and system components.
 
 ## Overview
 
-ORIUM is a high-performance Substrate-based Layer 1 blockchain designed for:
+ORIUM is a high-performance Substrate-based blockchain designed for:
 
-- **Native Token**: ORIUM (ORM) with "or" address prefix
+- **Native Token**: ORM with "or" address prefix
 - **Stablecoins**: dUSD and dEUR with MakerDAO-style collateralization
-- **Consensus**: BABE + GRANDPA for fast finality
-- **Performance**: Optimized for ≥50,000 TPS throughput
-- **Block Time**: 2 seconds for rapid transaction processing
+- **High Throughput**: Target of 50,000+ TPS
+- **Fast Finality**: 2-second block time with BABE + GRANDPA consensus
 
-### Key Design Principles
+## System Architecture
 
-1. **Performance First**: Runtime optimized for maximum throughput
-2. **Financial Stability**: Robust collateralization mechanisms
-3. **Decentralization**: BABE + GRANDPA consensus for security
-4. **Modularity**: Clean pallet architecture for extensibility
-5. **Security**: Comprehensive testing and audit pipeline
-
-## Consensus Architecture
-
-### BABE (Blind Assignment for Blockchain Extension)
-
-ORIUM uses BABE for block production with the following configuration:
-
-```rust
-// Epoch configuration
-pub const EPOCH_DURATION_IN_BLOCKS: BlockNumber = 10;
-pub const EPOCH_DURATION_IN_SLOTS: u64 = EPOCH_DURATION_IN_BLOCKS as u64 * SLOT_DURATION;
-
-// Slot duration: 2 seconds
-pub const SLOT_DURATION: u64 = 2000;
-
-// Maximum authorities
-pub const MAX_AUTHORITIES: u32 = 100;
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    ORIUM Blockchain                        │
+├─────────────────────────────────────────────────────────────┤
+│  Applications & Interfaces                                 │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
+│  │   Web UI    │ │  Mobile App │ │   CLI Tool  │          │
+│  └─────────────┘ └─────────────┘ └─────────────┘          │
+├─────────────────────────────────────────────────────────────┤
+│  API Layer                                                 │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
+│  │ JSON-RPC    │ │ WebSocket   │ │ GraphQL     │          │
+│  └─────────────┘ └─────────────┘ └─────────────┘          │
+├─────────────────────────────────────────────────────────────┤
+│  Runtime (WASM)                                            │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
+│  │ ORM Token   │ │ Stablecoins │ │ Collateral  │          │
+│  │   Pallet    │ │   Pallets   │ │   Engine    │          │
+│  └─────────────┘ └─────────────┘ └─────────────┘          │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
+│  │   System    │ │  Balances   │ │ Benchmarks  │          │
+│  │   Pallet    │ │   Pallet    │ │   Pallet    │          │
+│  └─────────────┘ └─────────────┘ └─────────────┘          │
+├─────────────────────────────────────────────────────────────┤
+│  Consensus Layer                                           │
+│  ┌─────────────┐ ┌─────────────┐                          │
+│  │    BABE     │ │   GRANDPA   │                          │
+│  │ (Block Prod)│ │ (Finality)  │                          │
+│  └─────────────┘ └─────────────┘                          │
+├─────────────────────────────────────────────────────────────┤
+│  Network Layer                                             │
+│  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐          │
+│  │   libp2p    │ │   Gossip    │ │   Discovery │          │
+│  └─────────────┘ └─────────────┘ └─────────────┘          │
+├─────────────────────────────────────────────────────────────┤
+│  Storage Layer                                             │
+│  ┌─────────────┐ ┌─────────────┐                          │
+│  │   RocksDB   │ │   State     │                          │
+│  │  (Backend)  │ │   Trie      │                          │
+│  └─────────────┘ └─────────────┘                          │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-#### BABE Features
-- **VRF-based Selection**: Validators selected using Verifiable Random Functions
-- **Slot-based Production**: 2-second slots for consistent block times
-- **Equivocation Protection**: Built-in protection against double-signing
-- **Fallback Mechanism**: Secondary slots ensure liveness
+## Consensus Mechanism
 
-### GRANDPA (GHOST-based Recursive ANcestor Deriving Prefix Agreement)
+### BABE (Block Production)
 
-GRANDPA provides Byzantine fault-tolerant finality:
+**Blind Assignment for Blockchain Extension**
+
+- **Slot Duration**: 2 seconds
+- **Epoch Duration**: 600 blocks (~20 minutes)
+- **VRF-based**: Verifiable Random Function for slot assignment
+- **Probabilistic**: Multiple validators can produce blocks in same slot
 
 ```rust
-// Finality configuration
-pub const GRANDPA_AUTHORITIES_SET_ID: u64 = 0;
-pub const GRANDPA_EQUIVOCATION_PROOF_MAX_SIZE: u32 = 1024;
+// BABE Configuration
+impl pallet_babe::Config for Runtime {
+    type EpochDuration = EpochDuration;
+    type ExpectedBlockTime = ExpectedBlockTime;
+    type EpochChangeTrigger = pallet_babe::SameAuthoritiesForever;
+    type DisabledValidators = ();
+    type WeightInfo = ();
+    type MaxAuthorities = MaxAuthorities;
+    type KeyOwnerProof = sp_session::MembershipProof;
+    type EquivocationReportSystem = ();
+}
 ```
 
-#### GRANDPA Features
-- **Fast Finality**: ~6 seconds (3 blocks) to finalization
-- **Byzantine Fault Tolerance**: Up to 1/3 malicious validators
-- **Justification Proofs**: Cryptographic finality proofs
-- **Fork Choice**: GHOST rule for optimal chain selection
+### GRANDPA (Finality)
 
-### Validator Set Management
+**GHOST-based Recursive ANcestor Deriving Prefix Agreement**
+
+- **Byzantine Fault Tolerant**: Handles up to 1/3 malicious validators
+- **Finality Gadget**: Provides deterministic finality
+- **Chain-based**: Finalizes chains, not individual blocks
+- **Asynchronous**: Operates independently of block production
 
 ```rust
-// Session configuration
-impl pallet_session::Config for Runtime {
-    type SessionManager = pallet_session::historical::NoteHistoricalRoot<Self, Staking>;
-    type Keys = SessionKeys;
-    type NextSessionRotation = pallet_session::PeriodicSessions<Period, Offset>;
+// GRANDPA Configuration
+impl pallet_grandpa::Config for Runtime {
+    type RuntimeEvent = RuntimeEvent;
+    type WeightInfo = ();
+    type MaxAuthorities = MaxAuthorities;
+    type MaxNominators = MaxNominators;
+    type MaxSetIdSessionEntries = MaxSetIdSessionEntries;
+    type KeyOwnerProof = sp_session::MembershipProof;
+    type EquivocationReportSystem = ();
 }
+```
 
-// Session keys structure
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug)]
-pub struct SessionKeys {
-    pub babe: BabeId,
-    pub grandpa: GrandpaId,
-    pub im_online: ImOnlineId,
-}
+### Consensus Flow
+
+```
+1. BABE Slot Assignment
+   ├── VRF determines slot winners
+   ├── Multiple validators can win same slot
+   └── Block production begins
+
+2. Block Production
+   ├── Collect transactions from pool
+   ├── Execute transactions in runtime
+   ├── Create block with state root
+   └── Broadcast block to network
+
+3. Block Import
+   ├── Validate block structure
+   ├── Execute block in runtime
+   ├── Update local state
+   └── Forward to GRANDPA
+
+4. GRANDPA Finalization
+   ├── Validators vote on chains
+   ├── Supermajority determines finality
+   ├── Finalized blocks are immutable
+   └── Prune alternative chains
 ```
 
 ## Runtime Architecture
 
-### Runtime Construction
+### FRAME (Framework for Runtime Aggregation of Modularized Entities)
+
+ORIUM runtime is built using Substrate's FRAME framework:
 
 ```rust
+// Runtime Construction
 construct_runtime!(
-    pub struct Runtime {
-        // System pallets
+    pub enum Runtime {
         System: frame_system,
         Timestamp: pallet_timestamp,
-        Balances: pallet_balances,
-        TransactionPayment: pallet_transaction_payment,
-        
-        // Consensus pallets
         Babe: pallet_babe,
         Grandpa: pallet_grandpa,
-        Session: pallet_session,
-        Historical: pallet_session::historical,
+        Balances: pallet_balances,
+        TransactionPayment: pallet_transaction_payment,
+        Sudo: pallet_sudo,
         
-        // Custom pallets
+        // ORIUM Custom Pallets
         OriumToken: pallet_orium_token,
         CollateralEngine: pallet_collateral_engine,
         Dusd: pallet_dusd,
         Deur: pallet_deur,
-        
-        // Utility pallets
-        Utility: pallet_utility,
-        Sudo: pallet_sudo,
+        Benchmarking: pallet_benchmarking,
     }
 );
 ```
 
-### Runtime Parameters
+### Custom Pallets
 
-#### Block Production
-```rust
-// Optimized for high TPS
-pub const MAXIMUM_BLOCK_WEIGHT: Weight = Weight::from_parts(
-    4u64 * WEIGHT_REF_TIME_PER_SECOND, // 4 seconds of compute
-    u64::MAX,
-);
+#### 1. pallet-orium-token
 
-pub const MAXIMUM_BLOCK_LENGTH: u32 = 10 * 1024 * 1024; // 10MB blocks
-```
-
-#### Transaction Pool
-```rust
-// High-throughput transaction pool
-pub const TRANSACTION_POOL_SIZE: usize = 8192;
-pub const TRANSACTION_POOL_LONGEVITY: u64 = 64;
-pub const TRANSACTION_POOL_MAX_PER_SENDER: usize = 256;
-```
-
-### Weight System
-
-ORIUM uses Substrate's weight system for resource accounting:
-
-```rust
-// Custom weight definitions
-pub struct OriumWeights;
-
-impl pallet_orium_token::WeightInfo for OriumWeights {
-    fn transfer() -> Weight {
-        Weight::from_parts(50_000_000, 0) // 50ms
-    }
-    
-    fn mint() -> Weight {
-        Weight::from_parts(75_000_000, 0) // 75ms
-    }
-    
-    fn burn() -> Weight {
-        Weight::from_parts(60_000_000, 0) // 60ms
-    }
-}
-```
-
-## Pallet Architecture
-
-### Core Pallets
-
-#### 1. ORIUM Token Pallet (`pallet-orium-token`)
-
-**Purpose**: Native ORM token implementation with ERC-20-like functionality.
-
-```rust
-#[pallet::pallet]
-pub struct Pallet<T>(_);
-
-#[pallet::storage]
-pub type Balances<T: Config> = StorageMap<
-    _,
-    Blake2_128Concat,
-    T::AccountId,
-    T::Balance,
-    ValueQuery,
->;
-
-#[pallet::storage]
-pub type TotalSupply<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
-
-#[pallet::storage]
-pub type Allowances<T: Config> = StorageDoubleMap<
-    _,
-    Blake2_128Concat,
-    T::AccountId, // Owner
-    Blake2_128Concat,
-    T::AccountId, // Spender
-    T::Balance,
-    ValueQuery,
->;
-```
+**Purpose**: Native ORM token management
 
 **Key Features**:
-- ERC-20 compatible interface
-- Mint/burn functionality
-- Allowance system for delegated transfers
-- Event emission for all operations
+- Token minting and burning (sudo only)
+- Balance transfers
+- Account management
+- Integration with fee payment system
 
-#### 2. Collateral Engine Pallet (`pallet-collateral-engine`)
-
-**Purpose**: MakerDAO-style CDP management for stablecoin collateralization.
-
+**Storage Items**:
 ```rust
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct Cdp<Balance> {
-    pub collateral: Balance,
-    pub dusd_debt: Balance,
-    pub deur_debt: Balance,
-}
-
-#[pallet::storage]
-pub type Cdps<T: Config> = StorageMap<
-    _,
-    Blake2_128Concat,
-    T::AccountId,
-    Cdp<T::Balance>,
-    OptionQuery,
->;
-
-#[pallet::storage]
-pub type OrmUsdPrice<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
-
-#[pallet::storage]
-pub type OrmEurPrice<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
+pub type TotalSupply<T> = StorageValue<_, T::Balance, ValueQuery>;
+pub type Accounts<T> = StorageMap<_, Blake2_128Concat, T::AccountId, AccountData<T::Balance>, ValueQuery>;
 ```
 
+**Extrinsics**:
+- `mint(origin, to, amount)`: Mint new ORM tokens
+- `burn(origin, from, amount)`: Burn ORM tokens
+- `transfer(origin, to, amount)`: Transfer tokens between accounts
+
+#### 2. pallet-collateral-engine
+
+**Purpose**: MakerDAO-style collateralized debt positions
+
 **Key Features**:
-- CDP creation and management
-- Collateral ratio enforcement (150% minimum)
-- Liquidation mechanism (130% threshold)
+- Vault creation and management
+- Collateral deposit/withdrawal
+- Stablecoin minting/burning
+- Liquidation mechanism
 - Price oracle integration
-- Multi-currency debt support
 
-#### 3. Stablecoin Pallets (`pallet-dusd`, `pallet-deur`)
-
-**Purpose**: USD and EUR-pegged stablecoins with standard token functionality.
-
+**Storage Items**:
 ```rust
-// Similar structure to ORIUM token but with restricted minting
-#[pallet::call]
-impl<T: Config> Pallet<T> {
-    // Only CollateralEngine can mint/burn
-    #[pallet::call_index(3)]
-    pub fn mint(
-        origin: OriginFor<T>,
-        dest: T::AccountId,
-        amount: T::Balance,
-    ) -> DispatchResult {
-        T::MintOrigin::ensure_origin(origin)?;
-        // Minting logic
-    }
-}
+pub type Vaults<T> = StorageMap<_, Blake2_128Concat, VaultId, VaultInfo<T>, OptionQuery>;
+pub type Prices<T> = StorageDoubleMap<_, Blake2_128Concat, AssetId, Blake2_128Concat, AssetId, Price, OptionQuery>;
+pub type CollateralRatios<T> = StorageMap<_, Blake2_128Concat, AssetId, Ratio, ValueQuery>;
 ```
 
-### Pallet Interactions
+**Extrinsics**:
+- `create_vault(origin, collateral_asset, collateral_amount)`
+- `add_collateral(origin, vault_id, amount)`
+- `withdraw_collateral(origin, vault_id, amount)`
+- `mint_stablecoin(origin, vault_id, stablecoin_type, amount)`
+- `repay_debt(origin, vault_id, amount)`
+- `liquidate_vault(origin, vault_id)`
 
-```mermaid
-graph TD
-    A[User] --> B[ORIUM Token]
-    A --> C[Collateral Engine]
-    C --> B
-    C --> D[dUSD Pallet]
-    C --> E[dEUR Pallet]
-    C --> F[Price Oracle]
-    G[Liquidator] --> C
+#### 3. pallet-dusd & pallet-deur
+
+**Purpose**: USD and EUR pegged stablecoins
+
+**Key Features**:
+- Asset management extending Substrate's Assets pallet
+- Integration with collateral engine
+- Transfer and balance operations
+- Peg maintenance mechanisms
+
+**Storage Items**:
+```rust
+pub type Asset<T> = StorageValue<_, AssetDetails<T::Balance, T::AccountId, DepositBalanceOf<T>>, OptionQuery>;
+pub type Account<T> = StorageDoubleMap<_, Blake2_128Concat, AssetId, Blake2_128Concat, T::AccountId, AssetAccount<T::Balance, DepositBalanceOf<T>, T::Extra, T::BlockNumber>, OptionQuery>;
 ```
 
-#### Interaction Flow
-1. **Collateral Deposit**: User deposits ORM tokens to CollateralEngine
-2. **Stablecoin Minting**: CollateralEngine mints dUSD/dEUR to user
-3. **Ratio Monitoring**: System monitors collateral ratios continuously
-4. **Liquidation**: Liquidators can liquidate undercollateralized positions
+#### 4. pallet-benchmarking
 
-## Storage Design
+**Purpose**: Performance measurement and TPS benchmarking
 
-### Efficient Storage Patterns
+**Key Features**:
+- Transaction throughput measurement
+- Stress testing capabilities
+- Performance metrics collection
+- Real-time TPS calculation
 
-#### 1. Single Storage Items
-Used for global state that changes infrequently:
-
+**Storage Items**:
 ```rust
-#[pallet::storage]
-pub type TotalSupply<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
-
-#[pallet::storage]
-pub type OrmUsdPrice<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
-```
-
-#### 2. Storage Maps
-Used for account-based data:
-
-```rust
-#[pallet::storage]
-pub type Balances<T: Config> = StorageMap<
-    _,
-    Blake2_128Concat, // Efficient hasher for AccountId
-    T::AccountId,
-    T::Balance,
-    ValueQuery, // Returns 0 for non-existent entries
->;
-```
-
-#### 3. Double Maps
-Used for complex relationships:
-
-```rust
-#[pallet::storage]
-pub type Allowances<T: Config> = StorageDoubleMap<
-    _,
-    Blake2_128Concat, // Owner hasher
-    T::AccountId,
-    Blake2_128Concat, // Spender hasher
-    T::AccountId,
-    T::Balance,
-    ValueQuery,
->;
-```
-
-### Storage Optimization Techniques
-
-#### 1. Bounded Collections
-```rust
-use frame_support::BoundedVec;
-
-#[pallet::storage]
-pub type LiquidationQueue<T: Config> = StorageValue<
-    _,
-    BoundedVec<T::AccountId, T::MaxLiquidations>,
-    ValueQuery,
->;
-```
-
-#### 2. Compact Encoding
-```rust
-#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo)]
-pub struct CompactCdp<Balance> {
-    #[codec(compact)]
-    pub collateral: Balance,
-    #[codec(compact)]
-    pub dusd_debt: Balance,
-    #[codec(compact)]
-    pub deur_debt: Balance,
-}
-```
-
-#### 3. Storage Migrations
-```rust
-pub mod v1 {
-    use super::*;
-    
-    pub fn migrate<T: Config>() -> Weight {
-        // Migration logic for storage upgrades
-        T::DbWeight::get().reads_writes(1000, 1000)
-    }
-}
+pub type TpsMeasurements<T> = StorageValue<_, BoundedVec<u32, ConstU32<100>>, ValueQuery>;
+pub type BenchmarkCounter<T> = StorageValue<_, u32, ValueQuery>;
 ```
 
 ## Performance Optimizations
 
-### Runtime Optimizations
+### Block Production Optimizations
 
-#### 1. Block Weight Configuration
 ```rust
-// Optimized block weights for high TPS
+// Runtime Configuration for High TPS
 parameter_types! {
-    pub RuntimeBlockWeights: BlockWeights = BlockWeights::with_sensible_defaults(
-        Weight::from_parts(4u64 * WEIGHT_REF_TIME_PER_SECOND, u64::MAX),
-        NORMAL_DISPATCH_RATIO,
-    );
-    
-    pub RuntimeBlockLength: BlockLength = BlockLength::max_with_normal_ratio(
-        10 * 1024 * 1024, // 10MB blocks
-        NORMAL_DISPATCH_RATIO,
-    );
+    pub const BlockHashCount: BlockNumber = 2400;
+    pub const Version: RuntimeVersion = VERSION;
+    pub RuntimeBlockLength: BlockLength = BlockLength::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
+    pub RuntimeBlockWeights: BlockWeights = BlockWeights::builder()
+        .base_block(BlockExecutionWeight::get())
+        .for_class(DispatchClass::all(), |weights| {
+            weights.base_extrinsic = ExtrinsicBaseWeight::get();
+        })
+        .for_class(DispatchClass::Normal, |weights| {
+            weights.max_total = Some(NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT);
+        })
+        .for_class(DispatchClass::Operational, |weights| {
+            weights.max_total = Some(MAXIMUM_BLOCK_WEIGHT);
+            weights.reserved = Some(
+                MAXIMUM_BLOCK_WEIGHT - NORMAL_DISPATCH_RATIO * MAXIMUM_BLOCK_WEIGHT
+            );
+        })
+        .avg_block_initialization(AVERAGE_ON_INITIALIZE_RATIO)
+        .build_or_panic();
 }
 ```
 
-#### 2. Transaction Pool Optimization
+### Transaction Pool Configuration
+
 ```rust
 // High-throughput transaction pool settings
-pub const TRANSACTION_POOL_SIZE: usize = 8192;
-pub const TRANSACTION_POOL_LONGEVITY: u64 = 64;
-pub const TRANSACTION_POOL_MAX_PER_SENDER: usize = 256;
-```
-
-#### 3. Batch Operations
-```rust
-// Utility pallet for batching transactions
-impl pallet_utility::Config for Runtime {
-    type RuntimeEvent = RuntimeEvent;
-    type RuntimeCall = RuntimeCall;
-    type PalletsOrigin = OriginCaller;
-    type WeightInfo = pallet_utility::weights::SubstrateWeight<Runtime>;
-}
-```
-
-### Database Optimizations
-
-#### 1. RocksDB Configuration
-```rust
-// Optimized database settings
-pub fn database_config() -> DatabaseConfig {
-    DatabaseConfig {
-        max_open_files: Some(10000),
-        memory_budget: Some(512 * 1024 * 1024), // 512MB
-        path_prefix: PathBuf::from("orium-db"),
-    }
-}
-```
-
-#### 2. State Caching
-```rust
-// Large state cache for better performance
-pub const STATE_CACHE_SIZE: usize = 1024 * 1024 * 1024; // 1GB
-```
-
-### Network Optimizations
-
-#### 1. Connection Limits
-```rust
-// High connection limits for validators
-pub const MAX_IN_PEERS: u32 = 50;
-pub const MAX_OUT_PEERS: u32 = 50;
+pub const POOL_LIMIT: usize = 8192;
+pub const POOL_KBYTES: usize = 32768;
 pub const MAX_RUNTIME_INSTANCES: u32 = 32;
 ```
 
-#### 2. Block Announcement
+### BABE Slot Duration
+
 ```rust
-// Optimized block announcement settings
-pub const BLOCK_ANNOUNCE_THRESHOLD: u32 = 10;
-pub const MAX_BLOCK_ANNOUNCE_SIZE: u32 = 1024 * 1024; // 1MB
+parameter_types! {
+    pub const ExpectedBlockTime: Moment = 2000; // 2 seconds
+    pub const EpochDuration: u64 = EPOCH_DURATION_IN_BLOCKS as u64;
+    pub const ReportLongevity: u64 = BondingDuration::get() as u64 * SessionsPerEra::get() as u64 * EpochDuration::get();
+}
 ```
 
-## Security Model
+## Stablecoin Mechanism
 
-### Financial Invariants
+### Collateralized Debt Position (CDP) System
 
-#### 1. Collateral Ratio Enforcement
+```
+┌─────────────────────────────────────────────────────────────┐
+│                 CDP Lifecycle                               │
+├─────────────────────────────────────────────────────────────┤
+│                                                             │
+│  1. Deposit Collateral (ORM)                               │
+│     ├── User deposits ORM tokens                           │
+│     ├── Vault created with unique ID                       │
+│     └── Collateral locked in vault                         │
+│                                                             │
+│  2. Mint Stablecoins (dUSD/dEUR)                          │
+│     ├── Check collateral ratio > 150%                      │
+│     ├── Calculate max mintable amount                      │
+│     ├── Mint stablecoins to user                          │
+│     └── Record debt in vault                               │
+│                                                             │
+│  3. Maintain Collateral Ratio                              │
+│     ├── Monitor ORM price changes                          │
+│     ├── Calculate current ratio                            │
+│     ├── Alert if ratio < 150%                             │
+│     └── Liquidate if ratio < 130%                         │
+│                                                             │
+│  4. Repay Debt & Withdraw                                  │
+│     ├── User repays stablecoin debt                       │
+│     ├── Burn repaid stablecoins                           │
+│     ├── Release proportional collateral                    │
+│     └── Close vault when debt = 0                         │
+│                                                             │
+└─────────────────────────────────────────────────────────────┘
+```
+
+## Security Architecture
+
+### Cryptographic Primitives
+
+- **Hashing**: Blake2b-256 for state trie
+- **Signatures**: SR25519 for account signatures
+- **VRF**: SR25519-VRF for BABE slot assignment
+- **Key Derivation**: BIP39/BIP44 for account generation
+
+### Attack Vectors and Mitigations
+
+#### 1. Consensus Attacks
+- **51% Attack**: Mitigated by GRANDPA finality
+- **Nothing at Stake**: Prevented by slashing conditions
+- **Long Range Attack**: Checkpoints and weak subjectivity
+
+#### 2. Economic Attacks
+- **Oracle Manipulation**: Multiple price feeds, time delays
+- **Flash Loan Attacks**: Minimum collateral lock periods
+- **Governance Attacks**: Time delays, emergency procedures
+
+#### 3. Network Attacks
+- **Eclipse Attack**: Diverse peer connections
+- **DDoS Attack**: Rate limiting, connection limits
+- **Sybil Attack**: Proof of stake requirements
+
+## Performance Benchmarking
+
+### TPS Measurement
+
+The benchmarking pallet provides real-time TPS measurement:
+
 ```rust
-fn ensure_collateral_ratio(
-    collateral: Balance,
-    debt_usd: Balance,
-    debt_eur: Balance,
-    orm_usd_price: Balance,
-    orm_eur_price: Balance,
-) -> DispatchResult {
-    let collateral_value_usd = collateral
-        .saturating_mul(orm_usd_price)
-        .saturating_div(PRICE_PRECISION);
+// TPS calculation in benchmarking pallet
+pub fn measure_tps(origin: OriginFor<T>) -> DispatchResultWithPostInfo {
+    ensure_signed(origin)?;
     
-    let total_debt_usd = debt_usd.saturating_add(
-        debt_eur.saturating_mul(orm_eur_price).saturating_div(orm_usd_price)
-    );
+    let current_block = frame_system::Pallet::<T>::block_number();
+    let transaction_count = frame_system::Pallet::<T>::extrinsic_index().unwrap_or(0);
     
-    let ratio = collateral_value_usd
-        .saturating_mul(10000)
-        .saturating_div(total_debt_usd);
+    let tps = (transaction_count * 30) / 60; // Approximate TPS calculation
     
-    ensure!(ratio >= MIN_COLLATERAL_RATIO, Error::<T>::CollateralRatioTooLow);
+    TpsMeasurements::<T>::mutate(|measurements| {
+        if measurements.try_push(tps).is_err() {
+            measurements.remove(0);
+            let _ = measurements.try_push(tps);
+        }
+    });
+    
     Ok(())
 }
 ```
 
-#### 2. Supply Conservation
-```rust
-// Ensure total supply equals sum of balances
-fn verify_supply_invariant<T: Config>() -> bool {
-    let total_supply = TotalSupply::<T>::get();
-    let sum_of_balances: T::Balance = Balances::<T>::iter()
-        .map(|(_, balance)| balance)
-        .fold(Zero::zero(), |acc, balance| acc.saturating_add(balance));
-    
-    total_supply == sum_of_balances
-}
+### Stress Testing
+
+The system includes stress testing capabilities to validate performance under load:
+
+```bash
+# Run TPS benchmark
+./scripts/benchmark-tps.sh 60 20 200
 ```
 
-### Access Control
+## Future Enhancements
 
-#### 1. Origin Types
-```rust
-// Custom origin for restricted operations
-#[derive(Clone, PartialEq, Eq, RuntimeDebug)]
-pub enum Origin {
-    Root,
-    Oracle,
-    CollateralEngine,
-}
+### Planned Features
 
-// Origin implementation
-impl From<Origin> for RuntimeOrigin {
-    fn from(origin: Origin) -> Self {
-        match origin {
-            Origin::Root => RuntimeOrigin::root(),
-            Origin::Oracle => RuntimeOrigin::signed(ORACLE_ACCOUNT),
-            Origin::CollateralEngine => RuntimeOrigin::signed(COLLATERAL_ENGINE_ACCOUNT),
-        }
-    }
-}
-```
+1. **Cross-Chain Bridges**: Integration with other blockchains
+2. **Advanced Oracle System**: Decentralized price feeds
+3. **Governance Module**: On-chain governance for parameters
+4. **Staking Rewards**: Validator and nominator rewards
+5. **Privacy Features**: Optional transaction privacy
 
-#### 2. Permission Checks
-```rust
-#[pallet::call]
-impl<T: Config> Pallet<T> {
-    #[pallet::call_index(0)]
-    pub fn update_price(
-        origin: OriginFor<T>,
-        pair: Vec<u8>,
-        price: T::Balance,
-    ) -> DispatchResult {
-        // Only oracle can update prices
-        T::OracleOrigin::ensure_origin(origin)?;
-        
-        // Update price logic
-        Ok(())
-    }
-}
-```
+### Scalability Improvements
 
-### Liquidation Security
+1. **Parallel Transaction Processing**: Multi-threaded execution
+2. **State Pruning**: Configurable state retention
+3. **Light Client Optimization**: Faster sync and verification
+4. **Database Optimization**: Custom storage backends
 
-#### 1. Liquidation Protection
-```rust
-fn can_liquidate<T: Config>(
-    account: &T::AccountId,
-    cdp: &Cdp<T::Balance>,
-) -> bool {
-    let ratio = calculate_collateral_ratio::<T>(cdp);
-    ratio < LIQUIDATION_THRESHOLD
-}
-```
+## Conclusion
 
-#### 2. Liquidation Incentives
-```rust
-// Liquidation bonus for liquidators
-pub const LIQUIDATION_PENALTY: Percent = Percent::from_percent(13);
-pub const LIQUIDATOR_REWARD: Percent = Percent::from_percent(10);
-```
+ORIUM blockchain represents a modern, high-performance blockchain architecture built on Substrate's robust foundation. The combination of BABE + GRANDPA consensus, custom pallets for stablecoin functionality, and performance optimizations positions ORIUM to achieve its ambitious TPS targets while maintaining security and decentralization.
 
-## Network Architecture
+The modular architecture allows for future enhancements and upgrades without compromising the core functionality, ensuring ORIUM can evolve with the rapidly changing blockchain landscape.
 
-### Node Types
+## References
 
-#### 1. Validator Nodes
-- **Purpose**: Block production and finalization
-- **Requirements**: High uptime, staking, session keys
-- **Rewards**: Block rewards and transaction fees
-
-#### 2. Full Nodes
-- **Purpose**: Network participation without validation
-- **Requirements**: Moderate resources
-- **Benefits**: RPC access, network decentralization
-
-#### 3. Archive Nodes
-- **Purpose**: Complete historical data storage
-- **Requirements**: Large storage capacity
-- **Use Cases**: Block explorers, analytics
-
-### P2P Network
-
-#### 1. Discovery Mechanism
-```rust
-// Bootstrap nodes for network discovery
-pub const BOOTNODES: &[&str] = &[
-    "/dns/bootnode1.orium.network/tcp/30333/p2p/12D3KooW...",
-    "/dns/bootnode2.orium.network/tcp/30333/p2p/12D3KooW...",
-];
-```
-
-#### 2. Protocol Configuration
-```rust
-// Network protocol settings
-pub const PROTOCOL_ID: &str = "/orium/1.0";
-pub const MAX_MESSAGE_SIZE: u32 = 16 * 1024 * 1024; // 16MB
-```
-
-### Telemetry and Monitoring
-
-#### 1. Prometheus Metrics
-```rust
-// Custom metrics for ORIUM
-pub struct OriumMetrics {
-    pub cdp_count: prometheus::Gauge,
-    pub total_collateral: prometheus::Gauge,
-    pub liquidation_events: prometheus::Counter,
-}
-```
-
-#### 2. Health Checks
-```rust
-// Health check endpoints
-pub fn health_check() -> HealthStatus {
-    HealthStatus {
-        is_syncing: is_major_syncing(),
-        peers: peer_count(),
-        should_have_peers: !is_dev_mode(),
-        cdp_system_healthy: check_cdp_invariants(),
-    }
-}
-```
-
-## Economic Model
-
-### Token Economics
-
-#### 1. ORM Token Distribution
-- **Validators**: 40% (staking rewards)
-- **Treasury**: 30% (development fund)
-- **Community**: 20% (airdrops, incentives)
-- **Team**: 10% (4-year vesting)
-
-#### 2. Inflation Model
-```rust
-// Inflation parameters
-pub const TARGET_INFLATION: Percent = Percent::from_percent(7);
-pub const VALIDATOR_REWARD_RATIO: Percent = Percent::from_percent(80);
-pub const TREASURY_RATIO: Percent = Percent::from_percent(20);
-```
-
-### Stablecoin Economics
-
-#### 1. Stability Mechanisms
-- **Collateral Backing**: 150% minimum ratio
-- **Liquidation System**: Automated liquidations at 130%
-- **Stability Fees**: 2% annual fee on debt
-
-#### 2. Risk Parameters
-```rust
-// Risk management parameters
-pub const MIN_COLLATERAL_RATIO: u32 = 15000; // 150%
-pub const LIQUIDATION_THRESHOLD: u32 = 13000; // 130%
-pub const STABILITY_FEE: Percent = Percent::from_percent(2);
-```
-
-### Fee Structure
-
-#### 1. Transaction Fees
-```rust
-// Fee calculation
-impl pallet_transaction_payment::Config for Runtime {
-    type OnChargeTransaction = CurrencyAdapter<Balances, ()>;
-    type OperationalFeeMultiplier = ConstU8<2>; // Reduced for high TPS
-    type WeightToFee = IdentityFee<Balance>;
-    type LengthToFee = ConstantMultiplier<Balance, TransactionByteFee>;
-    type FeeMultiplierUpdate = SlowAdjustingFeeUpdate<Self>;
-}
-```
-
-#### 2. CDP Fees
-- **Stability Fee**: 2% annually on outstanding debt
-- **Liquidation Penalty**: 13% of liquidated collateral
-- **Oracle Update Fee**: Minimal fee for price updates
-
-This architecture provides a robust foundation for the ORIUM blockchain, balancing performance, security, and economic sustainability while maintaining the flexibility for future upgrades and enhancements.
+- [Substrate Documentation](https://docs.substrate.io/)
+- [Polkadot Whitepaper](https://polkadot.network/whitepaper/)
+- [BABE Paper](https://research.web3.foundation/Polkadot/protocols/block-production/Babe)
+- [GRANDPA Paper](https://github.com/w3f/consensus/blob/master/pdf/grandpa.pdf)
+- [MakerDAO Documentation](https://docs.makerdao.com/)

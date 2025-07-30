@@ -54,13 +54,9 @@ pub use weights::*;
 pub mod pallet {
 	// Import various useful types required by all FRAME pallets.
 	use super::*;
-	use frame_support::{
-		pallet_prelude::*,
-		traits::{Get, StorageVersion},
-	};
+	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating, Zero};
-	use sp_std::fmt::Debug;
+	use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating};
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.
@@ -83,7 +79,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	pub type TotalSupply<T> = StorageValue<_, T::Balance, ValueQuery>;
+	pub type TotalSupply<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	#[pallet::storage]
 	pub type Balances<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance, ValueQuery>;
@@ -237,6 +233,36 @@ pub mod pallet {
 			
 			Self::deposit_event(Event::Transfer { from, to, amount });
 			
+			Ok(())
+		}
+	}
+
+	impl<T: Config> Pallet<T> {
+		pub fn balance_of(account: &T::AccountId) -> T::Balance {
+			Balances::<T>::get(account)
+		}
+
+		pub fn total_supply() -> T::Balance {
+			TotalSupply::<T>::get()
+		}
+
+		pub fn allowance(owner: &T::AccountId, spender: &T::AccountId) -> T::Balance {
+			Allowances::<T>::get(owner, spender)
+		}
+
+		pub fn mint_to(account: &T::AccountId, amount: T::Balance) -> DispatchResult {
+			Balances::<T>::mutate(account, |balance| *balance = balance.saturating_add(amount));
+			TotalSupply::<T>::mutate(|supply| *supply = supply.saturating_add(amount));
+			Ok(())
+		}
+
+		pub fn burn_from(account: &T::AccountId, amount: T::Balance) -> DispatchResult {
+			let balance = Balances::<T>::get(account);
+			if balance < amount {
+				return Err(Error::<T>::InsufficientBalance.into());
+			}
+			Balances::<T>::mutate(account, |balance| *balance = balance.saturating_sub(amount));
+			TotalSupply::<T>::mutate(|supply| *supply = supply.saturating_sub(amount));
 			Ok(())
 		}
 	}

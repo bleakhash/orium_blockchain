@@ -42,22 +42,25 @@ use sp_version::RuntimeVersion;
 use super::{
 	AccountId, Babe, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask,
-	System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION, tps_config,
+	System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION, HOURS,
 };
 
-const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
+const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(90); // Optimized for high TPS
 
 parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	pub const Version: RuntimeVersion = VERSION;
 
-	/// Optimized for high TPS: 4 seconds of compute with a 2 second average block time.
+	/// We allow for 2 seconds of compute with a 2 second average block time.
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::with_sensible_defaults(
-		Weight::from_parts(4u64 * WEIGHT_REF_TIME_PER_SECOND, u64::MAX),
-		NORMAL_DISPATCH_RATIO,
+		Weight::from_parts(2u64 * WEIGHT_REF_TIME_PER_SECOND, u64::MAX),
+		Perbill::from_percent(90), // Increased from 75% to 90% for higher throughput
 	);
-	pub RuntimeBlockLength: BlockLength = BlockLength::max_with_normal_ratio(10 * 1024 * 1024, NORMAL_DISPATCH_RATIO);
-	pub const SS58Prefix: u8 = 0x6f; // "or" prefix for ORIUM addresses
+	pub RuntimeBlockLength: BlockLength = BlockLength::max_with_normal_ratio(
+		10 * 1024 * 1024, // Increased from 5MB to 10MB for more transactions per block
+		Perbill::from_percent(90)
+	);
+	pub const SS58Prefix: u8 = 42;
 }
 
 /// The default types are being injected by [`derive_impl`](`frame_support::derive_impl`) from
@@ -91,12 +94,12 @@ impl frame_system::Config for Runtime {
 }
 
 impl pallet_babe::Config for Runtime {
-	type EpochDuration = ConstU64<{ SLOT_DURATION * 5 }>;
+	type EpochDuration = ConstU64<{ 4 * HOURS as u64 }>;
 	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
 	type EpochChangeTrigger = pallet_babe::SameAuthoritiesForever;
 	type DisabledValidators = ();
 	type WeightInfo = ();
-	type MaxAuthorities = ConstU32<100>;
+	type MaxAuthorities = ConstU32<32>;
 	type MaxNominators = ConstU32<0>;
 	type KeyOwnerProof = sp_core::Void;
 	type EquivocationReportSystem = ();
@@ -123,8 +126,7 @@ impl pallet_timestamp::Config for Runtime {
 }
 
 impl pallet_balances::Config for Runtime {
-	/// Optimized for high TPS: increased max locks
-	type MaxLocks = ConstU32<100>;
+	type MaxLocks = ConstU32<50>;
 	type MaxReserves = ();
 	type ReserveIdentifier = [u8; 8];
 	/// The type for recording an account's balance.
@@ -149,7 +151,7 @@ parameter_types! {
 impl pallet_transaction_payment::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type OnChargeTransaction = FungibleAdapter<Balances, ()>;
-	type OperationalFeeMultiplier = ConstU8<2>;
+	type OperationalFeeMultiplier = ConstU8<5>;
 	type WeightToFee = IdentityFee<Balance>;
 	type LengthToFee = IdentityFee<Balance>;
 	type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
@@ -168,34 +170,40 @@ impl pallet_template::Config for Runtime {
 	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
 }
 
-/// Configure the ORIUM token pallet with optimized weights.
+/// Configure the ORIUM token pallet
 impl pallet_orium_token::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_orium_token::weights::SubstrateWeight<Runtime>;
 	type Balance = Balance;
+	type WeightInfo = ();
 }
 
-/// Configure the collateral engine pallet.
+/// Configure the collateral engine pallet
 impl pallet_collateral_engine::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_collateral_engine::weights::SubstrateWeight<Runtime>;
 	type Balance = Balance;
 	type Currency = Balances;
-	type MinCollateralRatio = ConstU32<15000>; // 150%
-	type LiquidationRatio = ConstU32<13000>; // 130%
-	type StabilityFee = ConstU32<500>; // 5%
+	type MinCollateralRatio = ConstU32<150>; // 150%
+	type LiquidationRatio = ConstU32<120>; // 120%
+	type StabilityFee = ConstU32<5>; // 5%
+	type WeightInfo = ();
 }
 
-/// Configure the dUSD stablecoin pallet.
+/// Configure the dUSD stablecoin pallet
 impl pallet_dusd::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_dusd::weights::SubstrateWeight<Runtime>;
 	type Balance = Balance;
+	type WeightInfo = ();
 }
 
-/// Configure the dEUR stablecoin pallet.
+/// Configure the dEUR stablecoin pallet
 impl pallet_deur::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
-	type WeightInfo = pallet_deur::weights::SubstrateWeight<Runtime>;
 	type Balance = Balance;
+	type WeightInfo = ();
+}
+
+/// Configure the benchmarking pallet
+impl pallet_benchmarking::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = ();
 }

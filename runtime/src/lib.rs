@@ -7,7 +7,6 @@ pub mod apis;
 #[cfg(feature = "runtime-benchmarks")]
 mod benchmarks;
 pub mod configs;
-pub mod tps_config;
 
 extern crate alloc;
 use alloc::vec::Vec;
@@ -83,14 +82,12 @@ mod block_times {
 	/// `pallet_timestamp` which is in turn picked up by `pallet_aura` to implement `fn
 	/// slot_duration()`.
 	///
+	/// Change this to adjust the block time.
 	pub const MILLI_SECS_PER_BLOCK: u64 = 2000;
 
 	// NOTE: Currently it is not possible to change the slot duration after the chain has started.
 	// Attempting to do so will brick block production.
 	pub const SLOT_DURATION: u64 = MILLI_SECS_PER_BLOCK;
-	
-	pub const TRANSACTION_POOL_SIZE: u32 = 100_000;
-	pub const TRANSACTION_POOL_LONGEVITY: u64 = 128;
 }
 pub use block_times::*;
 
@@ -230,19 +227,18 @@ mod runtime {
 	#[runtime::pallet_index(7)]
 	pub type Template = pallet_template;
 
-	// Include the ORIUM native token pallet in the runtime.
 	#[runtime::pallet_index(8)]
 	pub type OriumToken = pallet_orium_token;
 
-	// Include the collateral engine pallet in the runtime.
 	#[runtime::pallet_index(9)]
 	pub type CollateralEngine = pallet_collateral_engine;
 
-	// Include the dUSD stablecoin pallet in the runtime.
 	#[runtime::pallet_index(10)]
 	pub type Dusd = pallet_dusd;
 
-	// Include the dEUR stablecoin pallet in the runtime.
 	#[runtime::pallet_index(11)]
 	pub type Deur = pallet_deur;
+
+	#[runtime::pallet_index(12)]
+	pub type Benchmarking = pallet_benchmarking;
 }

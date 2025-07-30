@@ -1,6 +1,5 @@
 [workspace]
 resolver = "2"
-
 members = [
     "node",
     "pallets/*",
@@ -8,80 +7,112 @@ members = [
 ]
 
 [workspace.package]
-authors = ["ORIUM Team <team@orium.network>"]
+authors = ["ORIUM Team"]
 edition = "2021"
-homepage = "https://orium.network"
+homepage = "https://github.com/bleakhash/orium_blockchain"
 license = "MIT"
-repository = "https://github.com/orium-network/orium-blockchain"
-
-[workspace.lints]
-rust.missing_docs = "allow"
+repository = "https://github.com/bleakhash/orium_blockchain"
 
 [workspace.dependencies]
-# External crates
-clap = { version = "4.5.3" }
-codec = { version = "3.6.12", package = "parity-scale-codec", default-features = false }
-futures = { version = "0.3.30" }
-jsonrpsee = { version = "0.23.2", default-features = false }
-scale-info = { version = "2.11.1", default-features = false }
-serde_json = { version = "1.0.114", default-features = false }
+# External dependencies
+codec = { package = "parity-scale-codec", version = "3.7.5", default-features = false }
+scale-info = { version = "2.11.6", default-features = false }
+serde_json = { version = "1.0.132", default-features = false }
+clap = { version = "4.5.13" }
+futures = { version = "0.3.31", default-features = false }
+jsonrpsee = { version = "0.24.7" }
 
-# Substrate (Polkadot SDK)
-frame-benchmarking = { version = "37.0.0", default-features = false }
-frame-benchmarking-cli = { version = "42.0.0" }
-frame-executive = { version = "37.0.0", default-features = false }
-frame-metadata-hash-extension = { version = "0.5.0", default-features = false }
-frame-support = { version = "37.0.0", default-features = false }
-frame-system = { version = "37.0.0", default-features = false }
-frame-system-benchmarking = { version = "37.0.0", default-features = false }
-frame-system-rpc-runtime-api = { version = "37.0.0", default-features = false }
-frame-try-runtime = { version = "0.45.0", default-features = false }
-pallet-babe = { version = "37.0.0", default-features = false }
-pallet-balances = { version = "37.0.0", default-features = false }
-pallet-grandpa = { version = "37.0.0", default-features = false }
-pallet-sudo = { version = "37.0.0", default-features = false }
-pallet-timestamp = { version = "37.0.0", default-features = false }
-pallet-transaction-payment = { version = "37.0.0", default-features = false }
-pallet-transaction-payment-rpc = { version = "37.0.0" }
-pallet-transaction-payment-rpc-runtime-api = { version = "37.0.0", default-features = false }
-sc-basic-authorship = { version = "0.44.0" }
-sc-cli = { version = "0.46.0" }
-sc-client-api = { version = "37.0.0" }
-sc-consensus = { version = "0.43.0" }
-sc-consensus-babe = { version = "0.44.0" }
-sc-consensus-grandpa = { version = "0.29.0" }
-sc-executor = { version = "0.40.0" }
-sc-network = { version = "0.44.0" }
-sc-offchain = { version = "39.0.0" }
-sc-service = { version = "0.45.0" }
-sc-telemetry = { version = "24.0.0" }
-sc-transaction-pool = { version = "37.0.0" }
-sc-transaction-pool-api = { version = "37.0.0" }
-sp-api = { version = "37.0.0", default-features = false }
-sp-block-builder = { version = "37.0.0", default-features = false }
-sp-blockchain = { version = "37.0.0" }
-sp-consensus-babe = { version = "0.37.0", default-features = false }
-sp-consensus-grandpa = { version = "21.0.0", default-features = false }
-sp-core = { version = "37.0.0", default-features = false }
-sp-genesis-builder = { version = "0.18.0", default-features = false }
-sp-inherents = { version = "37.0.0", default-features = false }
-sp-io = { version = "37.0.0", default-features = false }
-sp-keyring = { version = "37.0.0", default-features = false }
-sp-offchain = { version = "37.0.0", default-features = false }
-sp-runtime = { version = "37.0.0", default-features = false }
-sp-session = { version = "37.0.0", default-features = false }
-sp-storage = { version = "22.0.0", default-features = false }
-sp-timestamp = { version = "37.0.0" }
-sp-transaction-pool = { version = "37.0.0", default-features = false }
-sp-version = { version = "37.0.0", default-features = false }
-substrate-build-script-utils = { version = "11.0.0" }
-substrate-frame-rpc-system = { version = "45.0.0" }
-substrate-wasm-builder = { version = "24.0.0", default-features = false }
+# Substrate (Polkadot SDK) - Using correct paths
+frame-benchmarking = { path = "../polkadot-sdk/substrate/frame/benchmarking", default-features = false }
+frame-benchmarking-cli = { path = "../polkadot-sdk/substrate/utils/frame/benchmarking-cli" }
+frame-executive = { path = "../polkadot-sdk/substrate/frame/executive", default-features = false }
+frame-metadata-hash-extension = { path = "../polkadot-sdk/substrate/frame/metadata-hash-extension", default-features = false }
+frame-support = { path = "../polkadot-sdk/substrate/frame/support", default-features = false }
+frame-system = { path = "../polkadot-sdk/substrate/frame/system", default-features = false }
+frame-system-benchmarking = { path = "../polkadot-sdk/substrate/frame/system/benchmarking", default-features = false }
+frame-system-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/system/rpc/runtime-api", default-features = false }
+frame-try-runtime = { path = "../polkadot-sdk/substrate/frame/try-runtime", default-features = false }
+pallet-babe = { path = "../polkadot-sdk/substrate/frame/babe", default-features = false }
+pallet-aura = { path = "../polkadot-sdk/substrate/frame/aura", default-features = false }
+pallet-balances = { path = "../polkadot-sdk/substrate/frame/balances", default-features = false }
+pallet-grandpa = { path = "../polkadot-sdk/substrate/frame/grandpa", default-features = false }
+pallet-sudo = { path = "../polkadot-sdk/substrate/frame/sudo", default-features = false }
+pallet-timestamp = { path = "../polkadot-sdk/substrate/frame/timestamp", default-features = false }
+pallet-transaction-payment = { path = "../polkadot-sdk/substrate/frame/transaction-payment", default-features = false }
+pallet-transaction-payment-rpc = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc" }
+pallet-transaction-payment-rpc-runtime-api = { path = "../polkadot-sdk/substrate/frame/transaction-payment/rpc/runtime-api", default-features = false }
+sc-basic-authorship = { path = "../polkadot-sdk/substrate/client/basic-authorship" }
+sc-cli = { path = "../polkadot-sdk/substrate/client/cli" }
+sc-client-api = { path = "../polkadot-sdk/substrate/client/api" }
+sc-consensus = { path = "../polkadot-sdk/substrate/client/consensus/common" }
+sc-consensus-babe = { path = "../polkadot-sdk/substrate/client/consensus/babe" }
+sc-consensus-aura = { path = "../polkadot-sdk/substrate/client/consensus/aura" }
+sc-consensus-grandpa = { path = "../polkadot-sdk/substrate/client/consensus/grandpa" }
+sc-executor = { path = "../polkadot-sdk/substrate/client/executor" }
+sc-network = { path = "../polkadot-sdk/substrate/client/network" }
+sc-offchain = { path = "../polkadot-sdk/substrate/client/offchain" }
+sc-service = { path = "../polkadot-sdk/substrate/client/service" }
+sc-telemetry = { path = "../polkadot-sdk/substrate/client/telemetry" }
+sc-transaction-pool = { path = "../polkadot-sdk/substrate/client/transaction-pool" }
+sc-transaction-pool-api = { path = "../polkadot-sdk/substrate/client/transaction-pool/api" }
+sp-api = { path = "../polkadot-sdk/substrate/primitives/api", default-features = false }
+sp-block-builder = { path = "../polkadot-sdk/substrate/primitives/block-builder", default-features = false }
+sp-blockchain = { path = "../polkadot-sdk/substrate/primitives/blockchain" }
+sp-consensus-babe = { path = "../polkadot-sdk/substrate/primitives/consensus/babe", default-features = false }
+sp-consensus-aura = { path = "../polkadot-sdk/substrate/primitives/consensus/aura", default-features = false }
+sp-consensus-grandpa = { path = "../polkadot-sdk/substrate/primitives/consensus/grandpa", default-features = false }
+sp-core = { path = "../polkadot-sdk/substrate/primitives/core", default-features = false }
+sp-genesis-builder = { path = "../polkadot-sdk/substrate/primitives/genesis-builder", default-features = false }
+sp-inherents = { path = "../polkadot-sdk/substrate/primitives/inherents", default-features = false }
+sp-io = { path = "../polkadot-sdk/substrate/primitives/io", default-features = false }
+sp-keyring = { path = "../polkadot-sdk/substrate/primitives/keyring", default-features = false }
+sp-offchain = { path = "../polkadot-sdk/substrate/primitives/offchain", default-features = false }
+sp-runtime = { path = "../polkadot-sdk/substrate/primitives/runtime", default-features = false }
+sp-session = { path = "../polkadot-sdk/substrate/primitives/session", default-features = false }
+sp-std = { path = "../polkadot-sdk/substrate/primitives/std", default-features = false }
+sp-storage = { path = "../polkadot-sdk/substrate/primitives/storage", default-features = false }
+sp-timestamp = { path = "../polkadot-sdk/substrate/primitives/timestamp" }
+sp-transaction-pool = { path = "../polkadot-sdk/substrate/primitives/transaction-pool", default-features = false }
+sp-version = { path = "../polkadot-sdk/substrate/primitives/version", default-features = false }
+substrate-build-script-utils = { path = "../polkadot-sdk/substrate/utils/build-script-utils" }
+substrate-frame-rpc-system = { path = "../polkadot-sdk/substrate/utils/frame/rpc/system" }
+substrate-wasm-builder = { path = "../polkadot-sdk/substrate/utils/wasm-builder", default-features = false }
 
-# Local crates
-orium-runtime = { path = "runtime" }
-pallet-template = { path = "pallets/template" }
-pallet-orium-token = { path = "pallets/orium-token" }
-pallet-collateral-engine = { path = "pallets/collateral-engine" }
-pallet-dusd = { path = "pallets/dusd" }
-pallet-deur = { path = "pallets/deur" }
+# Local pallets
+pallet-template = { path = "pallets/template", default-features = false }
+pallet-orium-token = { path = "pallets/orium-token", default-features = false }
+pallet-collateral-engine = { path = "pallets/collateral-engine", default-features = false }
+pallet-dusd = { path = "pallets/dusd", default-features = false }
+pallet-deur = { path = "pallets/deur", default-features = false }
+pallet-benchmarking = { path = "pallets/benchmarking", default-features = false }
+
+# Runtime
+orium-runtime = { path = "runtime", default-features = false }
+
+[workspace.lints.rust]
+suspicious_double_ref_op = { level = "allow", priority = 2 }
+
+[workspace.lints.clippy]
+all = { level = "allow", priority = 0 }
+correctness = { level = "warn", priority = 1 }
+complexity = { level = "warn", priority = 1 }
+if-same-then-else = { level = "allow", priority = 2 }
+zero-prefixed-literal = { level = "allow", priority = 2 }
+type_complexity = { level = "allow", priority = 2 }
+nonminimal-bool = { level = "allow", priority = 2 }
+borrowed-box = { level = "allow", priority = 2 }
+too-many-arguments = { level = "allow", priority = 2 }
+unnecessary_cast = { level = "allow", priority = 2 }
+identity-op = { level = "allow", priority = 2 }
+useless_conversion = { level = "allow", priority = 2 }
+unit_arg = { level = "allow", priority = 2 }
+option-map-unit-fn = { level = "allow", priority = 2 }
+bind_instead_of_map = { level = "allow", priority = 2 }
+erasing_op = { level = "allow", priority = 2 }
+eq_op = { level = "allow", priority = 2 }
+while_immutable_condition = { level = "allow", priority = 2 }
+needless_option_as_deref = { level = "allow", priority = 2 }
+derivable_impls = { level = "allow", priority = 2 }
+stable_sort_primitive = { level = "allow", priority = 2 }
+extra-unused-type-parameters = { level = "allow", priority = 2 }
+default_constructed_unit_structs = { level = "allow", priority = 2 }

@@ -12,7 +12,7 @@ fn mint_works() {
 		assert_ok!(OriumToken::mint(RuntimeOrigin::root(), 1, 1000));
 		
 		// Check that the correct event was deposited
-		System::assert_last_event(Event::Minted { to: 1, amount: 1000 }.into());
+		System::assert_last_event(Event::Mint { to: 1, amount: 1000 }.into());
 		
 		assert_eq!(OriumToken::balance_of(&1), 1000);
 		assert_eq!(OriumToken::total_supply(), 1000);
@@ -41,7 +41,7 @@ fn transfer_works() {
 		assert_eq!(OriumToken::balance_of(&1), 500);
 		assert_eq!(OriumToken::balance_of(&2), 500);
 		
-		System::assert_last_event(Event::Transferred { from: 1, to: 2, amount: 500 }.into());
+		System::assert_last_event(Event::Transfer { from: 1, to: 2, amount: 500 }.into());
 	});
 }
 
@@ -67,7 +67,7 @@ fn burn_works() {
 		assert_eq!(OriumToken::balance_of(&1), 700);
 		assert_eq!(OriumToken::total_supply(), 700);
 		
-		System::assert_last_event(Event::Burned { from: 1, amount: 300 }.into());
+		System::assert_last_event(Event::Burn { from: 1, amount: 300 }.into());
 	});
 }
 

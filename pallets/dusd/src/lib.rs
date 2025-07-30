@@ -56,8 +56,7 @@ pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating, Zero};
-	use sp_std::fmt::Debug;
+	use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating};
 
 	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
 	// (`Call`s) in this pallet.
@@ -76,7 +75,7 @@ pub mod pallet {
 	}
 
 	#[pallet::storage]
-	pub type TotalSupply<T> = StorageValue<_, T::Balance, ValueQuery>;
+	pub type TotalSupply<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
 	#[pallet::storage]
 	pub type Balances<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, T::Balance, ValueQuery>;
@@ -228,5 +227,10 @@ pub mod pallet {
 		pub fn total_supply() -> T::Balance {
 			TotalSupply::<T>::get()
 		}
+
+		pub fn allowance(owner: &T::AccountId, spender: &T::AccountId) -> T::Balance {
+			Allowances::<T>::get(owner, spender)
+		}
 	}
+
 }

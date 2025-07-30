@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  validator-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orium-validator-1
+    ports:
+      - "9944:9944"  # WebSocket RPC
+      - "9933:9933"  # HTTP RPC
+      - "30333:30333" # P2P
+    volumes:
+      - validator1-data:/data
+    command: >
+      ./target/release/solochain-template-node
+      --base-path /data
+      --chain local
+      --validator
+      --node-key 0000000000000000000000000000000000000000000000000000000000000001
+      --port 30333
+      --rpc-port 9933
+      --rpc-external
+      --rpc-cors all
+      --rpc-methods unsafe
+      --name validator-1
+      --bootnodes /dns/validator-2/tcp/30333/p2p/12D3KooWEyoppNCUx8Yx66oV9fJnriXwCcXwDDUA2kj6vnc6iDEp
+    networks:
+      - orium-network
+    restart: unless-stopped
+
+  validator-2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orium-validator-2
+    ports:
+      - "9945:9944"
+      - "9934:9933"
+      - "30334:30333"
+    volumes:
+      - validator2-data:/data
+    command: >
+      ./target/release/solochain-template-node
+      --base-path /data
+      --chain local
+      --validator
+      --node-key 0000000000000000000000000000000000000000000000000000000000000002
+      --port 30333
+      --rpc-port 9933
+      --rpc-external
+      --rpc-cors all
+      --rpc-methods unsafe
+      --name validator-2
+      --bootnodes /dns/validator-1/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+    networks:
+      - orium-network
+    restart: unless-stopped
+
+  validator-3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orium-validator-3
+    ports:
+      - "9946:9944"
+      - "9935:9933"
+      - "30335:30333"
+    volumes:
+      - validator3-data:/data
+    command: >
+      ./target/release/solochain-template-node
+      --base-path /data
+      --chain local
+      --validator
+      --node-key 0000000000000000000000000000000000000000000000000000000000000003
+      --port 30333
+      --rpc-port 9933
+      --rpc-external
+      --rpc-cors all
+      --rpc-methods unsafe
+      --name validator-3
+      --bootnodes /dns/validator-1/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+    networks:
+      - orium-network
+    restart: unless-stopped
+
+  validator-4:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orium-validator-4
+    ports:
+      - "9947:9944"
+      - "9936:9933"
+      - "30336:30333"
+    volumes:
+      - validator4-data:/data
+    command: >
+      ./target/release/solochain-template-node
+      --base-path /data
+      --chain local
+      --validator
+      --node-key 0000000000000000000000000000000000000000000000000000000000000004
+      --port 30333
+      --rpc-port 9933
+      --rpc-external
+      --rpc-cors all
+      --rpc-methods unsafe
+      --name validator-4
+      --bootnodes /dns/validator-1/tcp/30333/p2p/12D3KooWHdiAxVd8uMQR1hGWXccidmfCwLqcMpGwR6QcTP6QRMuD
+    networks:
+      - orium-network
+    restart: unless-stopped
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: orium-prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+    networks:
+      - orium-network
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: orium-grafana
+    ports:
+      - "3000:3000"
+    volumes:
+      - grafana-data:/var/lib/grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    networks:
+      - orium-network
+    restart: unless-stopped
+
+networks:
+  orium-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+volumes:
+  validator1-data:
+  validator2-data:
+  validator3-data:
+  validator4-data:
+  prometheus-data:
+  grafana-data:

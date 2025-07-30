@@ -1,12 +1,12 @@
 [package]
 name = "orium-runtime"
-description = "ORIUM L1 blockchain runtime with native ORM token and dUSD/dEUR stablecoins."
-version = "0.1.0"
+description = "ORIUM blockchain runtime with native ORM token and dUSD/dEUR stablecoins."
+version = "1.0.0"
 license = "MIT"
-authors = ["ORIUM Team <team@orium.network>"]
-homepage = "https://orium.network"
-repository = "https://github.com/orium-network/orium-blockchain"
-edition = "2021"
+authors.workspace = true
+homepage.workspace = true
+repository.workspace = true
+edition.workspace = true
 publish = false
 
 [package.metadata.docs.rs]
@@ -61,10 +61,13 @@ frame-system-benchmarking = { optional = true, workspace = true }
 
 # The pallet in this template.
 pallet-template = { workspace = true }
+
+# ORIUM custom pallets
 pallet-orium-token = { workspace = true }
 pallet-collateral-engine = { workspace = true }
 pallet-dusd = { workspace = true }
 pallet-deur = { workspace = true }
+pallet-benchmarking = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { optional = true, workspace = true, default-features = true }
@@ -90,6 +93,7 @@ std = [
 	"pallet-collateral-engine/std",
 	"pallet-dusd/std",
 	"pallet-deur/std",
+	"pallet-benchmarking/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -116,7 +120,6 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-babe/runtime-benchmarks",
 	"pallet-balances/runtime-benchmarks",
 	"pallet-grandpa/runtime-benchmarks",
 	"pallet-sudo/runtime-benchmarks",
@@ -126,6 +129,7 @@ runtime-benchmarks = [
 	"pallet-dusd/runtime-benchmarks",
 	"pallet-deur/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
+	"pallet-transaction-payment/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
@@ -143,6 +147,7 @@ try-runtime = [
 	"pallet-dusd/try-runtime",
 	"pallet-deur/try-runtime",
 	"pallet-timestamp/try-runtime",
+	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",
 ]
 

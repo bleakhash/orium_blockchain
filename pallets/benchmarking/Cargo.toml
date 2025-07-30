@@ -1,35 +1,27 @@
 [package]
-name = "pallet-dusd"
-description = "dUSD stablecoin pallet - USD-pegged stablecoin backed by ORM collateral."
+name = "pallet-benchmarking"
 version = "0.1.0"
-license = "MIT"
-authors.workspace = true
-homepage.workspace = true
-repository.workspace = true
-edition.workspace = true
+description = "Benchmarking pallet for ORIUM blockchain performance testing"
+authors = ["ORIUM Team"]
+homepage = "https://github.com/bleakhash/orium_blockchain"
+edition = "2021"
+license = "Unlicense"
 publish = false
+repository = "https://github.com/bleakhash/orium_blockchain"
 
 [package.metadata.docs.rs]
 targets = ["x86_64-unknown-linux-gnu"]
-
-[lints]
-workspace = true
 
 [dependencies]
 codec = { features = ["derive"], workspace = true }
 scale-info = { features = ["derive"], workspace = true }
 
-# frame deps
+# Substrate
 frame-benchmarking = { optional = true, workspace = true }
 frame-support = { workspace = true }
 frame-system = { workspace = true }
 sp-runtime = { workspace = true }
 sp-std = { workspace = true }
-
-[dev-dependencies]
-sp-core = { workspace = true, default-features = true }
-sp-io = { workspace = true, default-features = true }
-sp-runtime = { workspace = true, default-features = true }
 
 [features]
 default = ["std"]
@@ -39,8 +31,6 @@ std = [
 	"frame-support/std",
 	"frame-system/std",
 	"scale-info/std",
-	"sp-core/std",
-	"sp-io/std",
 	"sp-runtime/std",
 	"sp-std/std",
 ]

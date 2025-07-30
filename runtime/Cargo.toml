@@ -126,7 +126,6 @@ runtime-benchmarks = [
 	"pallet-dusd/runtime-benchmarks",
 	"pallet-deur/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
-	"pallet-transaction-payment/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
@@ -144,7 +143,6 @@ try-runtime = [
 	"pallet-dusd/try-runtime",
 	"pallet-deur/try-runtime",
 	"pallet-timestamp/try-runtime",
-	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",
 ]
 

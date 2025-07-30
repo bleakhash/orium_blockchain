@@ -79,3 +79,6 @@ substrate-wasm-builder = { version = "24.0.0", default-features = false }
 orium-runtime = { path = "runtime" }
 pallet-template = { path = "pallets/template" }
 pallet-orium-token = { path = "pallets/orium-token" }
+pallet-collateral-engine = { path = "pallets/collateral-engine" }
+pallet-dusd = { path = "pallets/dusd" }
+pallet-deur = { path = "pallets/deur" }

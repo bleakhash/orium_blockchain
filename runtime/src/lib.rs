@@ -230,4 +230,16 @@ mod runtime {
 	// Include the ORIUM native token pallet in the runtime.
 	#[runtime::pallet_index(8)]
 	pub type OriumToken = pallet_orium_token;
+
+	// Include the collateral engine pallet in the runtime.
+	#[runtime::pallet_index(9)]
+	pub type CollateralEngine = pallet_collateral_engine;
+
+	// Include the dUSD stablecoin pallet in the runtime.
+	#[runtime::pallet_index(10)]
+	pub type Dusd = pallet_dusd;
+
+	// Include the dEUR stablecoin pallet in the runtime.
+	#[runtime::pallet_index(11)]
+	pub type Deur = pallet_deur;
 }

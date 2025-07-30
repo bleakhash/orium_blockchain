@@ -62,6 +62,9 @@ frame-system-benchmarking = { optional = true, workspace = true }
 # The pallet in this template.
 pallet-template = { workspace = true }
 pallet-orium-token = { workspace = true }
+pallet-collateral-engine = { workspace = true }
+pallet-dusd = { workspace = true }
+pallet-deur = { workspace = true }
 
 [build-dependencies]
 substrate-wasm-builder = { optional = true, workspace = true, default-features = true }
@@ -84,6 +87,9 @@ std = [
 	"pallet-sudo/std",
 	"pallet-template/std",
 	"pallet-orium-token/std",
+	"pallet-collateral-engine/std",
+	"pallet-dusd/std",
+	"pallet-deur/std",
 	"pallet-timestamp/std",
 	"pallet-transaction-payment-rpc-runtime-api/std",
 	"pallet-transaction-payment/std",
@@ -116,6 +122,9 @@ runtime-benchmarks = [
 	"pallet-sudo/runtime-benchmarks",
 	"pallet-template/runtime-benchmarks",
 	"pallet-orium-token/runtime-benchmarks",
+	"pallet-collateral-engine/runtime-benchmarks",
+	"pallet-dusd/runtime-benchmarks",
+	"pallet-deur/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"pallet-transaction-payment/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
@@ -131,6 +140,9 @@ try-runtime = [
 	"pallet-sudo/try-runtime",
 	"pallet-template/try-runtime",
 	"pallet-orium-token/try-runtime",
+	"pallet-collateral-engine/try-runtime",
+	"pallet-dusd/try-runtime",
+	"pallet-deur/try-runtime",
 	"pallet-timestamp/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"sp-runtime/try-runtime",

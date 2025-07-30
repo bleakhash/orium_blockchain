@@ -173,3 +173,28 @@ impl pallet_orium_token::Config for Runtime {
 	type WeightInfo = pallet_orium_token::weights::SubstrateWeight<Runtime>;
 	type Balance = Balance;
 }
+
+/// Configure the collateral engine pallet.
+impl pallet_collateral_engine::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_collateral_engine::weights::SubstrateWeight<Runtime>;
+	type Balance = Balance;
+	type Currency = Balances;
+	type MinCollateralRatio = ConstU32<15000>; // 150%
+	type LiquidationRatio = ConstU32<13000>; // 130%
+	type StabilityFee = ConstU32<500>; // 5%
+}
+
+/// Configure the dUSD stablecoin pallet.
+impl pallet_dusd::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_dusd::weights::SubstrateWeight<Runtime>;
+	type Balance = Balance;
+}
+
+/// Configure the dEUR stablecoin pallet.
+impl pallet_deur::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_deur::weights::SubstrateWeight<Runtime>;
+	type Balance = Balance;
+}

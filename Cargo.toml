@@ -34,15 +34,15 @@ frame-metadata-hash-extension = { version = "0.5.0", default-features = false }
 frame-support = { version = "37.0.0", default-features = false }
 frame-system = { version = "37.0.0", default-features = false }
 frame-system-benchmarking = { version = "37.0.0", default-features = false }
-frame-system-rpc-runtime-api = { version = "34.0.0", default-features = false }
-frame-try-runtime = { version = "0.43.0", default-features = false }
+frame-system-rpc-runtime-api = { version = "37.0.0", default-features = false }
+frame-try-runtime = { version = "0.45.0", default-features = false }
 pallet-babe = { version = "37.0.0", default-features = false }
-pallet-balances = { version = "38.0.0", default-features = false }
+pallet-balances = { version = "37.0.0", default-features = false }
 pallet-grandpa = { version = "37.0.0", default-features = false }
 pallet-sudo = { version = "37.0.0", default-features = false }
-pallet-timestamp = { version = "36.0.0", default-features = false }
+pallet-timestamp = { version = "37.0.0", default-features = false }
 pallet-transaction-payment = { version = "37.0.0", default-features = false }
-pallet-transaction-payment-rpc = { version = "40.0.0" }
+pallet-transaction-payment-rpc = { version = "37.0.0" }
 pallet-transaction-payment-rpc-runtime-api = { version = "37.0.0", default-features = false }
 sc-basic-authorship = { version = "0.44.0" }
 sc-cli = { version = "0.46.0" }
@@ -57,22 +57,22 @@ sc-service = { version = "0.45.0" }
 sc-telemetry = { version = "24.0.0" }
 sc-transaction-pool = { version = "37.0.0" }
 sc-transaction-pool-api = { version = "37.0.0" }
-sp-api = { version = "34.0.0", default-features = false }
-sp-block-builder = { version = "34.0.0", default-features = false }
+sp-api = { version = "37.0.0", default-features = false }
+sp-block-builder = { version = "37.0.0", default-features = false }
 sp-blockchain = { version = "37.0.0" }
-sp-consensus-babe = { version = "0.40.0", default-features = false }
+sp-consensus-babe = { version = "0.37.0", default-features = false }
 sp-consensus-grandpa = { version = "21.0.0", default-features = false }
-sp-core = { version = "34.0.0", default-features = false }
-sp-genesis-builder = { version = "0.15.0", default-features = false }
-sp-inherents = { version = "34.0.0", default-features = false }
-sp-io = { version = "38.0.0", default-features = false }
-sp-keyring = { version = "39.0.0", default-features = false }
-sp-offchain = { version = "34.0.0", default-features = false }
-sp-runtime = { version = "39.0.0", default-features = false }
-sp-session = { version = "35.0.0", default-features = false }
-sp-storage = { version = "21.0.0", default-features = false }
-sp-timestamp = { version = "34.0.0" }
-sp-transaction-pool = { version = "34.0.0", default-features = false }
+sp-core = { version = "37.0.0", default-features = false }
+sp-genesis-builder = { version = "0.18.0", default-features = false }
+sp-inherents = { version = "37.0.0", default-features = false }
+sp-io = { version = "37.0.0", default-features = false }
+sp-keyring = { version = "37.0.0", default-features = false }
+sp-offchain = { version = "37.0.0", default-features = false }
+sp-runtime = { version = "37.0.0", default-features = false }
+sp-session = { version = "37.0.0", default-features = false }
+sp-storage = { version = "22.0.0", default-features = false }
+sp-timestamp = { version = "37.0.0" }
+sp-transaction-pool = { version = "37.0.0", default-features = false }
 sp-version = { version = "37.0.0", default-features = false }
 substrate-build-script-utils = { version = "11.0.0" }
 substrate-frame-rpc-system = { version = "45.0.0" }

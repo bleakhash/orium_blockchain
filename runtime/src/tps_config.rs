@@ -1,4 +1,5 @@
 //! 
+//! 
 
 use frame_support::{
 	parameter_types,
@@ -8,22 +9,22 @@ use sp_runtime::Perbill;
 
 parameter_types! {
 	pub const MaximumBlockWeight: Weight = Weight::from_parts(
-		4u64 * WEIGHT_REF_TIME_PER_SECOND,
-		u64::MAX,
+		4u64 * WEIGHT_REF_TIME_PER_SECOND, // 4 seconds of compute time
+		u64::MAX, // No proof size limit for high throughput
 	);
 	
-	pub const MaximumBlockLength: u32 = 10 * 1024 * 1024;
+	pub const MaximumBlockLength: u32 = 10 * 1024 * 1024; // 10MB
 	
-	pub const TransactionPoolMaxSize: u32 = 100_000;
-	pub const TransactionPoolMaxPerSender: u32 = 1_000;
+	pub const TransactionPoolMaxSize: u32 = 100_000; // 100k transactions in pool
+	pub const TransactionPoolMaxPerSender: u32 = 1_000; // 1k per sender to prevent spam
 	
 	pub const BlockProductionRatio: Perbill = Perbill::from_percent(75);
 	
-	pub const MaxStorageKeyLength: u32 = 128;
-	pub const MaxStorageValueLength: u32 = 1024 * 1024; // 1MB
+	pub const MaxStorageKeyLength: u32 = 128; // Reasonable key length limit
+	pub const MaxStorageValueLength: u32 = 16 * 1024 * 1024; // 16MB for large data structures
 	
-	pub const MaxBatchSize: u32 = 10_000;
-	pub const MaxCallsPerBatch: u32 = 1_000;
+	pub const MaxBatchSize: u32 = 10_000; // Large batch size for high throughput
+	pub const MaxCallsPerBatch: u32 = 1_000; // Reasonable call limit per batch
 }
 
 pub mod weights {

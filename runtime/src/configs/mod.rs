@@ -166,3 +166,10 @@ impl pallet_template::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type WeightInfo = pallet_template::weights::SubstrateWeight<Runtime>;
 }
+
+/// Configure the ORIUM token pallet.
+impl pallet_orium_token::Config for Runtime {
+	type RuntimeEvent = RuntimeEvent;
+	type WeightInfo = pallet_orium_token::weights::SubstrateWeight<Runtime>;
+	type Balance = Balance;
+}

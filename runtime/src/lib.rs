@@ -226,4 +226,8 @@ mod runtime {
 	// Include the custom logic from the pallet-template in the runtime.
 	#[runtime::pallet_index(7)]
 	pub type Template = pallet_template;
+
+	// Include the ORIUM native token pallet in the runtime.
+	#[runtime::pallet_index(8)]
+	pub type OriumToken = pallet_orium_token;
 }

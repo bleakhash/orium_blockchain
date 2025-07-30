@@ -73,17 +73,6 @@ dependencies = [
 
 [[package]]
 name = "ahash"
-version = "0.7.8"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "891477e0c6a8957309ee5c45a6368af3ae14bb510732d2684ffa19af310920f9"
-dependencies = [
- "getrandom 0.2.16",
- "once_cell",
- "version_check",
-]
-
-[[package]]
-name = "ahash"
 version = "0.8.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5a15f179cd60c4584b8a8c596927aadc462e27f2ca70c04e0071964a73ba7a75"
@@ -271,7 +260,7 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43d68f2d516162846c1238e755a7c4d131b892b70cc70c471a8e3ca3ed818fce"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "ark-ff 0.5.0",
  "ark-poly 0.5.0",
  "ark-serialize 0.5.0",
@@ -403,7 +392,7 @@ version = "0.5.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "579305839da207f02b89cd1679e50e67b4331e2f9294a57693e5051b7703fe27"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "ark-ff 0.5.0",
  "ark-serialize 0.5.0",
  "ark-std 0.5.0",
@@ -1679,19 +1668,6 @@ dependencies = [
 
 [[package]]
 name = "curve25519-dalek"
-version = "3.2.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b9fdf9972b2bd6af2d913799d9ebc165ea4d2e65878e329d9c6b372c4491b61"
-dependencies = [
- "byteorder",
- "digest 0.9.0",
- "rand_core 0.5.1",
- "subtle 2.6.1",
- "zeroize",
-]
-
-[[package]]
-name = "curve25519-dalek"
 version = "4.1.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "97fb8b7c4503de7d6ae7b42ab72a5a59857b4c937ec27a3d4539dba95b5ab2be"
@@ -2155,7 +2131,7 @@ version = "2.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "70e796c081cee67dc755e1a36a0a172b897fab85fc3f6bc48307991f64e4eca9"
 dependencies = [
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "ed25519",
  "rand_core 0.6.4",
  "serde",
@@ -2166,25 +2142,11 @@ dependencies = [
 
 [[package]]
 name = "ed25519-zebra"
-version = "3.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7c24f403d068ad0b359e577a77f92392118be3f3c927538f2bb544a5ecd828c6"
-dependencies = [
- "curve25519-dalek 3.2.0",
- "hashbrown 0.12.3",
- "hex",
- "rand_core 0.6.4",
- "sha2 0.9.9",
- "zeroize",
-]
-
-[[package]]
-name = "ed25519-zebra"
 version = "4.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7d9ce6874da5d4415896cd45ffbc4d1cfc0c4f9c079427bd870742c30f2f65a9"
 dependencies = [
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "ed25519",
  "hashbrown 0.14.5",
  "hex",
@@ -2313,7 +2275,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "778e2ac28f6c47af28e4907f13ffd1e1ddbd400980a9abd7c8df189bf578a5ad"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -3571,9 +3533,6 @@ name = "hashbrown"
 version = "0.12.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
-dependencies = [
- "ahash 0.7.8",
-]
 
 [[package]]
 name = "hashbrown"
@@ -3581,7 +3540,7 @@ version = "0.13.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "43a3c133739dddd0d2990f9a4bdf8eb4b21ef50e4851ca85ab661199821d510e"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
 ]
 
 [[package]]
@@ -3590,7 +3549,7 @@ version = "0.14.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e5274423e17b7c9fc20b6e7e208532f9b19825d82dfd615708b70edd83df41f1"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "allocator-api2",
 ]
 
@@ -4335,7 +4294,7 @@ checksum = "e04d7f318608d35d4b61ddd75cbdaee86b023ebe2bd5a66ee0915f0bf93095a9"
 dependencies = [
  "hermit-abi 0.5.2",
  "libc",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -5134,7 +5093,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "d2eeec39ad3ad0677551907dd304b2f13f17208ccebe333bef194076cd2e8921"
 dependencies = [
  "bytes",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "futures",
  "libp2p-core 0.40.1",
  "libp2p-identity",
@@ -5160,7 +5119,7 @@ checksum = "36b137cb1ae86ee39f8e5d6245a296518912014eaa87427d24e6ff58cfc1b28c"
 dependencies = [
  "asynchronous-codec 0.7.0",
  "bytes",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "futures",
  "libp2p-core 0.42.0",
  "libp2p-identity",
@@ -6095,7 +6054,7 @@ dependencies = [
  "bitflags 1.3.2",
  "blake2 0.10.6",
  "c2-chacha",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "either",
  "hashlink",
  "lioness",
@@ -6763,7 +6722,7 @@ dependencies = [
  "sp-api 37.0.0",
  "sp-block-builder 37.0.0",
  "sp-blockchain 37.0.1",
- "sp-consensus-babe 0.37.0",
+ "sp-consensus-babe",
  "sp-core 37.0.0",
  "sp-genesis-builder 0.18.0",
  "sp-inherents 37.0.0",
@@ -6804,7 +6763,7 @@ dependencies = [
  "serde_json",
  "sp-api 37.0.0",
  "sp-block-builder 37.0.0",
- "sp-consensus-babe 0.37.0",
+ "sp-consensus-babe",
  "sp-consensus-grandpa",
  "sp-core 37.0.0",
  "sp-genesis-builder 0.18.0",
@@ -6855,7 +6814,7 @@ dependencies = [
  "parity-scale-codec",
  "scale-info",
  "sp-application-crypto 38.0.0",
- "sp-consensus-babe 0.40.0",
+ "sp-consensus-babe",
  "sp-core 34.0.0",
  "sp-io 38.0.2",
  "sp-runtime 39.0.5",
@@ -8260,7 +8219,7 @@ dependencies = [
  "once_cell",
  "socket2 0.5.10",
  "tracing",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -8324,12 +8283,6 @@ dependencies = [
  "ppv-lite86",
  "rand_core 0.9.3",
 ]
-
-[[package]]
-name = "rand_core"
-version = "0.5.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "90bde5296fc891b0cef12a6d03ddccc162ce7b2aff54160af9338f8d40df6d19"
 
 [[package]]
 name = "rand_core"
@@ -8711,7 +8664,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.4.15",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -8724,7 +8677,7 @@ dependencies = [
  "errno",
  "libc",
  "linux-raw-sys 0.9.4",
- "windows-sys 0.60.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -9174,8 +9127,8 @@ dependencies = [
  "sp-block-builder 34.0.0",
  "sp-blockchain 37.0.1",
  "sp-consensus 0.40.0",
- "sp-consensus-babe 0.40.0",
- "sp-consensus-slots 0.40.1",
+ "sp-consensus-babe",
+ "sp-consensus-slots",
  "sp-core 34.0.0",
  "sp-crypto-hashing",
  "sp-inherents 34.0.0",
@@ -9205,7 +9158,7 @@ version = "0.29.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "197e67ed725bcad27563c4418254e89e56eb79491cebb278e9926760a1fc16d4"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "array-bytes",
  "async-trait",
  "dyn-clone",
@@ -9261,7 +9214,7 @@ dependencies = [
  "sp-arithmetic 26.1.0",
  "sp-blockchain 37.0.1",
  "sp-consensus 0.40.0",
- "sp-consensus-slots 0.40.1",
+ "sp-consensus-slots",
  "sp-core 34.0.0",
  "sp-inherents 34.0.0",
  "sp-runtime 39.0.5",
@@ -9635,7 +9588,7 @@ version = "0.44.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2dc2ff366c09b8aba9b0bfd04b991508788203a28da0c66a32625cda7ae8015d"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "futures",
  "futures-timer",
  "log",
@@ -10291,7 +10244,7 @@ version = "0.2.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "356285bbf17bea63d9e52e96bd18f039672ac92b55b8cb997d6162a2a37d1649"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "cfg-if",
  "hashbrown 0.13.2",
 ]
@@ -10305,7 +10258,7 @@ dependencies = [
  "aead",
  "arrayref",
  "arrayvec",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "getrandom_or_panic",
  "merlin",
  "rand_core 0.6.4",
@@ -10730,7 +10683,7 @@ dependencies = [
  "aes-gcm",
  "blake2 0.10.6",
  "chacha20poly1305",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "rand_core 0.6.4",
  "ring 0.17.14",
  "rustc_version",
@@ -10782,29 +10735,6 @@ dependencies = [
  "log",
  "rand 0.8.5",
  "sha1",
-]
-
-[[package]]
-name = "sp-api"
-version = "31.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "b500647cfe266d58781f44af9b13c3bd57fb3be08642f2a9f13e024cc5e22359"
-dependencies = [
- "hash-db",
- "log",
- "parity-scale-codec",
- "scale-info",
- "sp-api-proc-macro 19.0.1",
- "sp-core 32.0.0",
- "sp-externalities 0.28.0",
- "sp-metadata-ir 0.7.0",
- "sp-runtime 36.0.0",
- "sp-runtime-interface 27.0.0",
- "sp-state-machine 0.40.0",
- "sp-std",
- "sp-trie 34.0.0",
- "sp-version 34.0.0",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -10901,21 +10831,6 @@ dependencies = [
 
 [[package]]
 name = "sp-api-proc-macro"
-version = "19.0.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "03dc91647720a98088870ca64dba37d2f2607a6450f001ee98af7a51489e9c6f"
-dependencies = [
- "Inflector",
- "blake2 0.10.6",
- "expander",
- "proc-macro-crate 3.3.0",
- "proc-macro2",
- "quote",
- "syn 2.0.104",
-]
-
-[[package]]
-name = "sp-api-proc-macro"
 version = "20.0.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5e3ec5a1a14307e21d2356e73e01573b6c82330a7e30eaceed59a90161b0c2d2"
@@ -10957,20 +10872,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn 2.0.104",
-]
-
-[[package]]
-name = "sp-application-crypto"
-version = "35.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "57541120624a76379cc993cbb85064a5148957a92da032567e54bce7977f51fc"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-core 32.0.0",
- "sp-io 35.0.0",
- "sp-std",
 ]
 
 [[package]]
@@ -11200,25 +11101,6 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus-babe"
-version = "0.37.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "75f99229c382c3f849160da42c897321fd6b82fe685bc0c4ba4afdd51b818bd1"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-api 31.0.0",
- "sp-application-crypto 35.0.0",
- "sp-consensus-slots 0.37.0",
- "sp-core 32.0.0",
- "sp-inherents 31.0.0",
- "sp-runtime 36.0.0",
- "sp-timestamp 31.0.0",
-]
-
-[[package]]
-name = "sp-consensus-babe"
 version = "0.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "36ee95e17ee8dcd14db7d584b899a426565ca9abe5a266ab82277977fc547f86"
@@ -11229,7 +11111,7 @@ dependencies = [
  "serde",
  "sp-api 34.0.0",
  "sp-application-crypto 38.0.0",
- "sp-consensus-slots 0.40.1",
+ "sp-consensus-slots",
  "sp-core 34.0.0",
  "sp-inherents 34.0.0",
  "sp-runtime 39.0.5",
@@ -11256,18 +11138,6 @@ dependencies = [
 
 [[package]]
 name = "sp-consensus-slots"
-version = "0.37.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60823551c6987e2f5e1dda772140a09850e866e704757662795b8e7cacf9b228"
-dependencies = [
- "parity-scale-codec",
- "scale-info",
- "serde",
- "sp-timestamp 31.0.0",
-]
-
-[[package]]
-name = "sp-consensus-slots"
 version = "0.40.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "bbafb7ed44f51c22fa277fb39b33dc601fa426133a8e2b53f3f46b10f07fba43"
@@ -11276,53 +11146,6 @@ dependencies = [
  "scale-info",
  "serde",
  "sp-timestamp 34.0.0",
-]
-
-[[package]]
-name = "sp-core"
-version = "32.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bb2dac7e47c7ddbb61efe196d5cce99f6ea88926c961fa39909bfeae46fc5a7b"
-dependencies = [
- "array-bytes",
- "bitflags 1.3.2",
- "blake2 0.10.6",
- "bounded-collections",
- "bs58 0.5.1",
- "dyn-clonable",
- "ed25519-zebra 3.1.0",
- "futures",
- "hash-db",
- "hash256-std-hasher",
- "impl-serde 0.4.0",
- "itertools 0.10.5",
- "k256",
- "libsecp256k1",
- "log",
- "merlin",
- "parity-bip39",
- "parity-scale-codec",
- "parking_lot 0.12.4",
- "paste",
- "primitive-types 0.12.2",
- "rand 0.8.5",
- "scale-info",
- "schnorrkel",
- "secp256k1",
- "secrecy",
- "serde",
- "sp-crypto-hashing",
- "sp-debug-derive",
- "sp-externalities 0.28.0",
- "sp-runtime-interface 27.0.0",
- "sp-std",
- "sp-storage 21.0.0",
- "ss58-registry",
- "substrate-bip39",
- "thiserror 1.0.69",
- "tracing",
- "w3f-bls",
- "zeroize",
 ]
 
 [[package]]
@@ -11337,7 +11160,7 @@ dependencies = [
  "bounded-collections",
  "bs58 0.5.1",
  "dyn-clonable",
- "ed25519-zebra 4.0.3",
+ "ed25519-zebra",
  "futures",
  "hash-db",
  "hash256-std-hasher",
@@ -11384,7 +11207,7 @@ dependencies = [
  "bounded-collections",
  "bs58 0.5.1",
  "dyn-clonable",
- "ed25519-zebra 4.0.3",
+ "ed25519-zebra",
  "futures",
  "hash-db",
  "hash256-std-hasher",
@@ -11431,7 +11254,7 @@ dependencies = [
  "bounded-collections",
  "bs58 0.5.1",
  "dyn-clonable",
- "ed25519-zebra 4.0.3",
+ "ed25519-zebra",
  "futures",
  "hash-db",
  "hash256-std-hasher",
@@ -11479,7 +11302,7 @@ dependencies = [
  "bounded-collections",
  "bs58 0.5.1",
  "dyn-clone",
- "ed25519-zebra 4.0.3",
+ "ed25519-zebra",
  "futures",
  "hash-db",
  "hash256-std-hasher",
@@ -11648,20 +11471,6 @@ dependencies = [
 
 [[package]]
 name = "sp-inherents"
-version = "31.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "170537049d57fc645637e4586fe98a3291392b2ecfd7988ea31639cf43470b42"
-dependencies = [
- "async-trait",
- "impl-trait-for-tuples",
- "parity-scale-codec",
- "scale-info",
- "sp-runtime 36.0.0",
- "thiserror 1.0.69",
-]
-
-[[package]]
-name = "sp-inherents"
 version = "33.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "53407ba38ec22ca4a16381722c4bd0b559a0428bc1713079b0d5163ada63186a"
@@ -11714,33 +11523,6 @@ dependencies = [
  "scale-info",
  "sp-runtime 42.0.0",
  "thiserror 1.0.69",
-]
-
-[[package]]
-name = "sp-io"
-version = "35.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8b64ab18a0e29def6511139a8c45a59c14a846105aab6f9cc653523bd3b81f55"
-dependencies = [
- "bytes",
- "ed25519-dalek",
- "libsecp256k1",
- "log",
- "parity-scale-codec",
- "polkavm-derive 0.9.1",
- "rustversion",
- "secp256k1",
- "sp-core 32.0.0",
- "sp-crypto-hashing",
- "sp-externalities 0.28.0",
- "sp-keystore 0.38.0",
- "sp-runtime-interface 27.0.0",
- "sp-state-machine 0.40.0",
- "sp-std",
- "sp-tracing",
- "sp-trie 34.0.0",
- "tracing",
- "tracing-core",
 ]
 
 [[package]]
@@ -11898,18 +11680,6 @@ dependencies = [
  "sp-core 34.0.0",
  "sp-runtime 39.0.5",
  "strum 0.26.3",
-]
-
-[[package]]
-name = "sp-keystore"
-version = "0.38.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4e6c7a7abd860a5211a356cf9d5fcabf0eb37d997985e5d722b6b33dcc815528"
-dependencies = [
- "parity-scale-codec",
- "parking_lot 0.12.4",
- "sp-core 32.0.0",
- "sp-externalities 0.28.0",
 ]
 
 [[package]]
@@ -12079,31 +11849,6 @@ dependencies = [
  "rustc-hash 1.1.0",
  "serde",
  "sp-core 37.0.0",
-]
-
-[[package]]
-name = "sp-runtime"
-version = "36.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6b85cb874b78ebb17307a910fc27edf259a0455ac5155d87eaed8754c037e07"
-dependencies = [
- "docify",
- "either",
- "hash256-std-hasher",
- "impl-trait-for-tuples",
- "log",
- "parity-scale-codec",
- "paste",
- "rand 0.8.5",
- "scale-info",
- "serde",
- "simple-mermaid",
- "sp-application-crypto 35.0.0",
- "sp-arithmetic 26.1.0",
- "sp-core 32.0.0",
- "sp-io 35.0.0",
- "sp-std",
- "sp-weights 31.1.0",
 ]
 
 [[package]]
@@ -12442,27 +12187,6 @@ dependencies = [
 
 [[package]]
 name = "sp-state-machine"
-version = "0.40.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "18084cb996c27d5d99a88750e0a8eb4af6870a40df97872a5923e6d293d95fb9"
-dependencies = [
- "hash-db",
- "log",
- "parity-scale-codec",
- "parking_lot 0.12.4",
- "rand 0.8.5",
- "smallvec",
- "sp-core 32.0.0",
- "sp-externalities 0.28.0",
- "sp-panic-handler",
- "sp-trie 34.0.0",
- "thiserror 1.0.69",
- "tracing",
- "trie-db 0.29.1",
-]
-
-[[package]]
-name = "sp-state-machine"
 version = "0.41.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6f6ac196ea92c4d0613c071e1a050765dbfa30107a990224a4aba02c7dbcd063"
@@ -12573,7 +12297,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c219bc34ef4d1f9835f3ed881f965643c32034fcc030eb33b759dadbc802c1c2"
 dependencies = [
  "aes-gcm",
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "ed25519-dalek",
  "hkdf",
  "parity-scale-codec",
@@ -12621,19 +12345,6 @@ dependencies = [
  "ref-cast",
  "serde",
  "sp-debug-derive",
-]
-
-[[package]]
-name = "sp-timestamp"
-version = "31.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bdb7768c895643e315f9bcfacdd61e283b78c862d976fd081a508cf7239c8643"
-dependencies = [
- "async-trait",
- "parity-scale-codec",
- "sp-inherents 31.0.0",
- "sp-runtime 36.0.0",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -12711,35 +12422,11 @@ dependencies = [
 
 [[package]]
 name = "sp-trie"
-version = "34.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "87727eced997f14d0f79e3a5186a80e38a9de87f6e9dc0baea5ebf8b7f9d8b66"
-dependencies = [
- "ahash 0.8.12",
- "hash-db",
- "lazy_static",
- "memory-db 0.32.0",
- "nohash-hasher",
- "parity-scale-codec",
- "parking_lot 0.12.4",
- "rand 0.8.5",
- "scale-info",
- "schnellru",
- "sp-core 32.0.0",
- "sp-externalities 0.28.0",
- "thiserror 1.0.69",
- "tracing",
- "trie-db 0.29.1",
- "trie-root",
-]
-
-[[package]]
-name = "sp-trie"
 version = "35.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "a61ab0c3e003f457203702e4753aa5fe9e762380543fada44650b1217e4aa5a5"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "hash-db",
  "lazy_static",
  "memory-db 0.32.0",
@@ -12763,7 +12450,7 @@ version = "36.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "841d717c0f465f5371569e6fdc25b6f32d47c15d6e4c92b3b779e1c9b18b951d"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "hash-db",
  "lazy_static",
  "memory-db 0.32.0",
@@ -12787,7 +12474,7 @@ version = "37.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6282aef9f4b6ecd95a67a45bcdb67a71f4a4155c09a53c10add4ffe823db18cd"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "hash-db",
  "lazy_static",
  "memory-db 0.32.0",
@@ -12811,7 +12498,7 @@ version = "38.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1851c4929ae88932c6bcdb9e60f4063e478ca612012af3b6d365c7dc9c591f7f"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "hash-db",
  "memory-db 0.32.0",
  "nohash-hasher",
@@ -12834,7 +12521,7 @@ version = "40.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6b2e157c9cf44a1a9d20f3c69322e302db70399bf3f218211387fe009dd4041c"
 dependencies = [
- "ahash 0.8.12",
+ "ahash",
  "foldhash",
  "hash-db",
  "hashbrown 0.15.4",
@@ -12852,24 +12539,6 @@ dependencies = [
  "tracing",
  "trie-db 0.30.0",
  "trie-root",
-]
-
-[[package]]
-name = "sp-version"
-version = "34.0.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0b8e3856686aa2719b1c05af07ba7e6021d844944472f246f3b5f1c585be04cd"
-dependencies = [
- "impl-serde 0.4.0",
- "parity-scale-codec",
- "parity-wasm",
- "scale-info",
- "serde",
- "sp-crypto-hashing-proc-macro",
- "sp-runtime 36.0.0",
- "sp-std",
- "sp-version-proc-macro 14.0.0",
- "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -13363,7 +13032,7 @@ dependencies = [
  "getrandom 0.3.3",
  "once_cell",
  "rustix 1.0.8",
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -14691,7 +14360,7 @@ version = "0.1.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf221c93e13a30d793f7645a0e7762c55d169dbb0a49671918a2319d289b10bb"
 dependencies = [
- "windows-sys 0.59.0",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -15192,7 +14861,7 @@ version = "2.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c7e468321c81fb07fa7f4c636c3972b9100f0346e5b6a9f2bd0603a52f7ed277"
 dependencies = [
- "curve25519-dalek 4.1.3",
+ "curve25519-dalek",
  "rand_core 0.6.4",
  "serde",
  "zeroize",

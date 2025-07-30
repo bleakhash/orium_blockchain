@@ -14,6 +14,9 @@ homepage = "https://orium.network"
 license = "MIT"
 repository = "https://github.com/orium-network/orium-blockchain"
 
+[workspace.lints]
+rust.missing_docs = "allow"
+
 [workspace.dependencies]
 # External crates
 clap = { version = "4.5.3" }
@@ -72,7 +75,7 @@ sp-timestamp = { version = "34.0.0" }
 sp-transaction-pool = { version = "34.0.0", default-features = false }
 sp-version = { version = "37.0.0", default-features = false }
 substrate-build-script-utils = { version = "11.0.0" }
-substrate-frame-rpc-system = { version = "37.0.0" }
+substrate-frame-rpc-system = { version = "45.0.0" }
 substrate-wasm-builder = { version = "24.0.0", default-features = false }
 
 # Local crates

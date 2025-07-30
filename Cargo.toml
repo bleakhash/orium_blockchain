@@ -56,7 +56,7 @@ sc-offchain = { version = "39.0.0" }
 sc-service = { version = "0.45.0" }
 sc-telemetry = { version = "24.0.0" }
 sc-transaction-pool = { version = "37.0.0" }
-sc-transaction-pool-api = { version = "37.0.0" }
+sc-transaction-pool-api = { version = "40.0.0" }
 sp-api = { version = "37.0.0", default-features = false }
 sp-block-builder = { version = "37.0.0", default-features = false }
 sp-blockchain = { version = "37.0.0" }

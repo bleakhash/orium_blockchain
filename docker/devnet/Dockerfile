@@ -1,5 +1,5 @@
 # Multi-stage build for ORIUM blockchain node
-FROM rust:1.75-bullseye as builder
+FROM rust:1.88-bullseye as builder
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \

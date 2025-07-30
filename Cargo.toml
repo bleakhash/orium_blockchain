@@ -22,7 +22,7 @@ rust.missing_docs = "allow"
 clap = { version = "4.5.3" }
 codec = { version = "3.6.12", package = "parity-scale-codec", default-features = false }
 futures = { version = "0.3.30" }
-jsonrpsee = { version = "0.23.2", default-features = false }
+jsonrpsee = { version = "0.24.9", default-features = false }
 scale-info = { version = "2.11.1", default-features = false }
 serde_json = { version = "1.0.114", default-features = false }
 

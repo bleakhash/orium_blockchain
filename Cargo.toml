@@ -33,7 +33,7 @@ frame-system = { version = "37.0.0", default-features = false }
 frame-system-benchmarking = { version = "37.0.0", default-features = false }
 frame-system-rpc-runtime-api = { version = "34.0.0", default-features = false }
 frame-try-runtime = { version = "0.43.0", default-features = false }
-pallet-aura = { version = "36.0.0", default-features = false }
+pallet-babe = { version = "37.0.0", default-features = false }
 pallet-balances = { version = "38.0.0", default-features = false }
 pallet-grandpa = { version = "37.0.0", default-features = false }
 pallet-sudo = { version = "37.0.0", default-features = false }
@@ -45,7 +45,7 @@ sc-basic-authorship = { version = "0.44.0" }
 sc-cli = { version = "0.46.0" }
 sc-client-api = { version = "37.0.0" }
 sc-consensus = { version = "0.43.0" }
-sc-consensus-aura = { version = "0.44.0" }
+sc-consensus-babe = { version = "0.44.0" }
 sc-consensus-grandpa = { version = "0.29.0" }
 sc-executor = { version = "0.40.0" }
 sc-network = { version = "0.44.0" }
@@ -57,7 +57,7 @@ sc-transaction-pool-api = { version = "37.0.0" }
 sp-api = { version = "34.0.0", default-features = false }
 sp-block-builder = { version = "34.0.0", default-features = false }
 sp-blockchain = { version = "37.0.0" }
-sp-consensus-aura = { version = "0.40.0", default-features = false }
+sp-consensus-babe = { version = "0.40.0", default-features = false }
 sp-consensus-grandpa = { version = "21.0.0", default-features = false }
 sp-core = { version = "34.0.0", default-features = false }
 sp-genesis-builder = { version = "0.15.0", default-features = false }

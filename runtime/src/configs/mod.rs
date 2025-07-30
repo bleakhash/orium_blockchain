@@ -34,13 +34,13 @@ use frame_support::{
 };
 use frame_system::limits::{BlockLength, BlockWeights};
 use pallet_transaction_payment::{ConstFeeMultiplier, FungibleAdapter, Multiplier};
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_consensus_babe::AuthorityId as BabeId;
 use sp_runtime::{traits::One, Perbill};
 use sp_version::RuntimeVersion;
 
 // Local module imports
 use super::{
-	AccountId, Aura, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo, Runtime,
+	AccountId, Babe, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo, Runtime,
 	RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask,
 	System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION,
 };
@@ -51,7 +51,7 @@ parameter_types! {
 	pub const BlockHashCount: BlockNumber = 2400;
 	pub const Version: RuntimeVersion = VERSION;
 
-	/// We allow for 2 seconds of compute with a 6 second average block time.
+	/// We allow for 2 seconds of compute with a 2 second average block time.
 	pub RuntimeBlockWeights: BlockWeights = BlockWeights::with_sensible_defaults(
 		Weight::from_parts(2u64 * WEIGHT_REF_TIME_PER_SECOND, u64::MAX),
 		NORMAL_DISPATCH_RATIO,
@@ -90,12 +90,16 @@ impl frame_system::Config for Runtime {
 	type MaxConsumers = frame_support::traits::ConstU32<16>;
 }
 
-impl pallet_aura::Config for Runtime {
-	type AuthorityId = AuraId;
+impl pallet_babe::Config for Runtime {
+	type EpochDuration = ConstU64<{ SLOT_DURATION * 10 }>;
+	type ExpectedBlockTime = ConstU64<SLOT_DURATION>;
+	type EpochChangeTrigger = pallet_babe::SameAuthoritiesForever;
 	type DisabledValidators = ();
+	type WeightInfo = ();
 	type MaxAuthorities = ConstU32<32>;
-	type AllowMultipleBlocksPerSlot = ConstBool<false>;
-	type SlotDuration = pallet_aura::MinimumPeriodTimesTwo<Runtime>;
+	type MaxNominators = ConstU32<0>;
+	type KeyOwnerProof = sp_core::Void;
+	type EquivocationReportSystem = ();
 }
 
 impl pallet_grandpa::Config for Runtime {
@@ -113,7 +117,7 @@ impl pallet_grandpa::Config for Runtime {
 impl pallet_timestamp::Config for Runtime {
 	/// A timestamp: milliseconds since the unix epoch.
 	type Moment = u64;
-	type OnTimestampSet = Aura;
+	type OnTimestampSet = Babe;
 	type MinimumPeriod = ConstU64<{ SLOT_DURATION / 2 }>;
 	type WeightInfo = ();
 }

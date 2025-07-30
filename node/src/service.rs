@@ -2,13 +2,13 @@
 
 use futures::FutureExt;
 use sc_client_api::{Backend, BlockBackend};
-use sc_consensus_aura::{ImportQueueParams, SlotProportion, StartAuraParams};
+use sc_consensus_babe::{BabeBlockImport, BabeLink, BabeParams};
 use sc_consensus_grandpa::SharedVoterState;
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager, WarpSyncConfig};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
-use solochain_template_runtime::{self, apis::RuntimeApi, opaque::Block};
-use sp_consensus_aura::sr25519::AuthorityPair as AuraPair;
+use orium_runtime::{self, apis::RuntimeApi, opaque::Block};
+use sp_consensus_babe::AuthorityPair as BabePair;
 use std::{sync::Arc, time::Duration};
 
 pub(crate) type FullClient = sc_service::TFullClient<
@@ -30,8 +30,9 @@ pub type Service = sc_service::PartialComponents<
 	sc_consensus::DefaultImportQueue<Block>,
 	sc_transaction_pool::TransactionPoolHandle<Block, FullClient>,
 	(
-		sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>,
+		BabeBlockImport<Block, FullClient, sc_consensus_grandpa::GrandpaBlockImport<FullBackend, Block, FullClient, FullSelectChain>>,
 		sc_consensus_grandpa::LinkHalf<Block, FullClient, FullSelectChain>,
+		BabeLink<Block>,
 		Option<Telemetry>,
 	),
 >;
@@ -83,36 +84,34 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		telemetry.as_ref().map(|x| x.handle()),
 	)?;
 
+	let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
+		sc_consensus_babe::configuration(&*client)?,
+		grandpa_block_import,
+		client.clone(),
+	)?;
+
 	let cidp_client = client.clone();
-	let import_queue =
-		sc_consensus_aura::import_queue::<AuraPair, _, _, _, _, _>(ImportQueueParams {
-			block_import: grandpa_block_import.clone(),
-			justification_import: Some(Box::new(grandpa_block_import.clone())),
-			client: client.clone(),
-			create_inherent_data_providers: move |parent_hash, _| {
-				let cidp_client = cidp_client.clone();
-				async move {
-					let slot_duration = sc_consensus_aura::standalone::slot_duration_at(
-						&*cidp_client,
-						parent_hash,
-					)?;
-					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-
-					let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							*timestamp,
-							slot_duration,
-						);
-
-					Ok((slot, timestamp))
-				}
-			},
-			spawner: &task_manager.spawn_essential_handle(),
-			registry: config.prometheus_registry(),
-			check_for_equivocation: Default::default(),
-			telemetry: telemetry.as_ref().map(|x| x.handle()),
-			compatibility_mode: Default::default(),
-		})?;
+	let import_queue = sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
+		link: babe_link.clone(),
+		block_import: babe_block_import.clone(),
+		justification_import: Some(Box::new(babe_block_import.clone())),
+		client: client.clone(),
+		select_chain: select_chain.clone(),
+		create_inherent_data_providers: move |parent_hash, _| {
+			let cidp_client = cidp_client.clone();
+			async move {
+				let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+				let slot = sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+					*timestamp,
+					std::time::Duration::from_millis(orium_runtime::SLOT_DURATION),
+				);
+				Ok((slot, timestamp))
+			}
+		},
+		spawner: &task_manager.spawn_essential_handle(),
+		registry: config.prometheus_registry(),
+		telemetry: telemetry.as_ref().map(|x| x.handle()),
+	})?;
 
 	Ok(sc_service::PartialComponents {
 		client,
@@ -122,7 +121,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 		keystore_container,
 		select_chain,
 		transaction_pool,
-		other: (grandpa_block_import, grandpa_link, telemetry),
+		other: (babe_block_import, grandpa_link, babe_link, telemetry),
 	})
 }
 
@@ -140,7 +139,7 @@ pub fn new_full<
 		keystore_container,
 		select_chain,
 		transaction_pool,
-		other: (block_import, grandpa_link, mut telemetry),
+		other: (block_import, grandpa_link, babe_link, mut telemetry),
 	} = new_partial(&config)?;
 
 	let mut net_config = sc_network::config::FullNetworkConfiguration::<
@@ -245,43 +244,37 @@ pub fn new_full<
 			telemetry.as_ref().map(|x| x.handle()),
 		);
 
-		let slot_duration = sc_consensus_aura::slot_duration(&*client)?;
-
-		let aura = sc_consensus_aura::start_aura::<AuraPair, _, _, _, _, _, _, _, _, _, _>(
-			StartAuraParams {
-				slot_duration,
-				client,
-				select_chain,
-				block_import,
-				proposer_factory,
-				create_inherent_data_providers: move |_, ()| async move {
-					let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
-
-					let slot =
-						sp_consensus_aura::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
-							*timestamp,
-							slot_duration,
-						);
-
-					Ok((slot, timestamp))
-				},
-				force_authoring,
-				backoff_authoring_blocks,
-				keystore: keystore_container.keystore(),
-				sync_oracle: sync_service.clone(),
-				justification_sync_link: sync_service.clone(),
-				block_proposal_slot_portion: SlotProportion::new(2f32 / 3f32),
-				max_block_proposal_slot_portion: None,
-				telemetry: telemetry.as_ref().map(|x| x.handle()),
-				compatibility_mode: Default::default(),
+		let babe_config = sc_consensus_babe::BabeParams {
+			keystore: keystore_container.keystore(),
+			client: client.clone(),
+			select_chain,
+			env: proposer_factory,
+			block_import,
+			sync_oracle: sync_service.clone(),
+			justification_sync_link: sync_service.clone(),
+			create_inherent_data_providers: move |_, ()| async move {
+				let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
+				let slot = sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
+					*timestamp,
+					std::time::Duration::from_millis(orium_runtime::SLOT_DURATION),
+				);
+				Ok((slot, timestamp))
 			},
-		)?;
+			force_authoring,
+			backoff_authoring_blocks,
+			babe_link,
+			block_proposal_slot_portion: sc_consensus_babe::SlotProportion::new(2f32 / 3f32),
+			max_block_proposal_slot_portion: None,
+			telemetry: telemetry.as_ref().map(|x| x.handle()),
+		};
 
-		// the AURA authoring task is considered essential, i.e. if it
+		let babe = sc_consensus_babe::start_babe(babe_config)?;
+
+		// the BABE authoring task is considered essential, i.e. if it
 		// fails we take down the service with it.
 		task_manager
 			.spawn_essential_handle()
-			.spawn_blocking("aura", Some("block-authoring"), aura);
+			.spawn_blocking("babe", Some("block-authoring"), babe);
 	}
 
 	if enable_grandpa {

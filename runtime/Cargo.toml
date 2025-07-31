@@ -19,13 +19,13 @@ workspace = true
 codec = { features = ["derive"], workspace = true }
 scale-info = { features = ["derive", "serde"], workspace = true }
 serde_json = { workspace = true, default-features = false, features = ["alloc"] }
+getrandom = { workspace = true }
 
 # frame
 frame-executive = { workspace = true }
 frame-metadata-hash-extension = { workspace = true }
 frame-support = { features = ["experimental"], workspace = true }
 frame-system = { workspace = true }
-frame-try-runtime = { optional = true, workspace = true }
 
 # frame pallets
 pallet-babe = { workspace = true }
@@ -80,7 +80,6 @@ std = [
 	"frame-system-benchmarking?/std",
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
-	"frame-try-runtime?/std",
 	"pallet-babe/std",
 	"pallet-balances/std",
 	"pallet-grandpa/std",
@@ -127,23 +126,6 @@ runtime-benchmarks = [
 	"pallet-deur/runtime-benchmarks",
 	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
-]
-try-runtime = [
-	"frame-executive/try-runtime",
-	"frame-support/try-runtime",
-	"frame-system/try-runtime",
-	"frame-try-runtime/try-runtime",
-	"pallet-babe/try-runtime",
-	"pallet-balances/try-runtime",
-	"pallet-grandpa/try-runtime",
-	"pallet-sudo/try-runtime",
-	"pallet-template/try-runtime",
-	"pallet-orium-token/try-runtime",
-	"pallet-collateral-engine/try-runtime",
-	"pallet-dusd/try-runtime",
-	"pallet-deur/try-runtime",
-	"pallet-timestamp/try-runtime",
-	"sp-runtime/try-runtime",
 ]
 
 # Enable the metadata hash generation.

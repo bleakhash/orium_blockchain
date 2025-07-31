@@ -1,24 +1,29 @@
-use crate::{mock::*, Error, Event, Something};
-use frame_support::{assert_noop, assert_ok};
+use crate::mock::*;
+use frame_support::assert_ok;
+
+use crate::mock::{Dusd, RuntimeOrigin, System};
 
 #[test]
-fn it_works_for_default_value() {
-	new_test_ext().execute_with(|| {
-		// Go past genesis block so events get deposited
-		System::set_block_number(1);
-		// Dispatch a signed extrinsic.
-		assert_ok!(Template::do_something(RuntimeOrigin::signed(1), 42));
-		// Read pallet storage and assert an expected result.
-		assert_eq!(Something::<Test>::get(), Some(42));
-		// Assert that the correct event was deposited
-		System::assert_last_event(Event::SomethingStored { something: 42, who: 1 }.into());
-	});
+fn transfer_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+
+        assert_ok!(Dusd::mint_to(&1, 1000));
+        assert_ok!(Dusd::transfer(RuntimeOrigin::signed(1), 2, 500));
+
+        assert_eq!(Dusd::balance_of(&1), 500);
+        assert_eq!(Dusd::balance_of(&2), 500);
+    });
 }
 
 #[test]
-fn correct_error_for_none_value() {
-	new_test_ext().execute_with(|| {
-		// Ensure the expected error is thrown when no value is present.
-		assert_noop!(Template::cause_error(RuntimeOrigin::signed(1)), Error::<Test>::NoneValue);
-	});
+fn mint_works() {
+    new_test_ext().execute_with(|| {
+        System::set_block_number(1);
+
+        assert_ok!(Dusd::mint_to(&1, 1000));
+
+        assert_eq!(Dusd::balance_of(&1), 1000);
+        assert_eq!(Dusd::total_supply(), 1000);
+    });
 }

@@ -20,10 +20,10 @@ codec = { features = ["derive"], workspace = true }
 scale-info = { features = ["derive", "serde"], workspace = true }
 serde_json = { workspace = true, default-features = false, features = ["alloc"] }
 
+
 # frame
 frame-executive = { workspace = true }
-frame-metadata-hash-extension = { workspace = true }
-frame-support = { features = ["experimental"], workspace = true }
+frame-support = { workspace = true }
 frame-system = { workspace = true }
 frame-try-runtime = { optional = true, workspace = true }
 
@@ -75,7 +75,6 @@ std = [
 	"codec/std",
 	"frame-benchmarking?/std",
 	"frame-executive/std",
-	"frame-metadata-hash-extension/std",
 	"frame-support/std",
 	"frame-system-benchmarking?/std",
 	"frame-system-rpc-runtime-api/std",
@@ -116,16 +115,11 @@ runtime-benchmarks = [
 	"frame-support/runtime-benchmarks",
 	"frame-system-benchmarking/runtime-benchmarks",
 	"frame-system/runtime-benchmarks",
-	"pallet-babe/runtime-benchmarks",
-	"pallet-balances/runtime-benchmarks",
-	"pallet-grandpa/runtime-benchmarks",
-	"pallet-sudo/runtime-benchmarks",
 	"pallet-template/runtime-benchmarks",
 	"pallet-orium-token/runtime-benchmarks",
 	"pallet-collateral-engine/runtime-benchmarks",
 	"pallet-dusd/runtime-benchmarks",
 	"pallet-deur/runtime-benchmarks",
-	"pallet-timestamp/runtime-benchmarks",
 	"sp-runtime/runtime-benchmarks",
 ]
 try-runtime = [
@@ -153,7 +147,7 @@ try-runtime = [
 # generate the metadata hash and then a second time with the
 # `RUNTIME_METADATA_HASH` environment variable set for the `CheckMetadataHash`
 # extension.
-metadata-hash = ["substrate-wasm-builder/metadata-hash"]
+metadata-hash = []
 
 # A convenience feature for enabling things when doing a build
 # for an on-chain release.

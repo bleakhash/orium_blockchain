@@ -12,218 +12,221 @@ A high-performance L1 blockchain built with [Substrate](https://substrate.io/), 
 - **Testing**: Comprehensive unit, property, and fuzzing test suite
 - **DevOps**: CI/CD pipeline with Docker Compose 4-node devnet
 
-## Getting Started
+## Quick Start
 
-Depending on your operating system and Rust version, there might be additional
-packages required to compile this template. Check the
-[Install](https://docs.substrate.io/install/) instructions for your platform for
-the most common dependencies. Alternatively, you can use one of the [alternative
-installation](#alternatives-installations) options.
+### Prerequisites
 
-Fetch solochain template code:
+- Rust 1.75+ with `wasm32-unknown-unknown` target
+- Docker and Docker Compose for devnet deployment
+- Node.js (optional, for advanced benchmarking)
 
-```sh
-git clone https://github.com/paritytech/polkadot-sdk-solochain-template.git solochain-template
-
-cd solochain-template
-```
-
-### Build
-
-🔨 Use the following command to build the node without launching it:
+### Clone and Build
 
 ```sh
+git clone https://github.com/bleakhash/orium_blockchain.git
+cd orium_blockchain
 cargo build --release
 ```
 
-### Embedded Docs
+### Development Node
 
-After you build the project, you can use the following command to explore its
-parameters and subcommands:
-
-```sh
-./target/release/solochain-template-node -h
-```
-
-You can generate and view the [Rust
-Docs](https://doc.rust-lang.org/cargo/commands/cargo-doc.html) for this template
-with this command:
+Start a single-node development chain:
 
 ```sh
-cargo +nightly doc --open
+./target/release/orium-node --dev
 ```
 
-### Single-Node Development Chain
-
-The following command starts a single-node development chain that doesn't
-persist state:
+With detailed logging:
 
 ```sh
-./target/release/solochain-template-node --dev
+RUST_BACKTRACE=1 ./target/release/orium-node -ldebug --dev
 ```
 
-To purge the development chain's state, run the following command:
+Purge development chain state:
 
 ```sh
-./target/release/solochain-template-node purge-chain --dev
+./target/release/orium-node purge-chain --dev
 ```
 
-To start the development chain with detailed logging, run the following command:
+### Docker Devnet (4 Validators)
+
+Start the 4-validator devnet with monitoring:
 
 ```sh
-RUST_BACKTRACE=1 ./target/release/solochain-template-node -ldebug --dev
+cd docker/devnet
+./start-devnet.sh
 ```
 
-Development chains:
+This launches:
+- 4 validator nodes (Alice, Bob, Charlie, Dave)
+- Prometheus monitoring (http://localhost:9090)
+- Grafana dashboards (http://localhost:3000, admin/admin)
 
-- Maintain state in a `tmp` folder while the node is running.
-- Use the **Alice** and **Bob** accounts as default validator authorities.
-- Use the **Alice** account as the default `sudo` account.
-- Are preconfigured with a genesis state (`/node/src/chain_spec.rs`) that
-  includes several pre-funded development accounts.
-
-
-To persist chain state between runs, specify a base path by running a command
-similar to the following:
+Stop the devnet:
 
 ```sh
-// Create a folder to use as the db base path
-$ mkdir my-chain-state
-
-// Use of that folder to store the chain state
-$ ./target/release/solochain-template-node --dev --base-path ./my-chain-state/
-
-// Check the folder structure created inside the base path after running the chain
-$ ls ./my-chain-state
-chains
-$ ls ./my-chain-state/chains/
-dev
-$ ls ./my-chain-state/chains/dev
-db keystore network
+docker-compose down
 ```
 
-### Connect with Polkadot-JS Apps Front-End
+### Performance Benchmarking
 
-After you start the node template locally, you can interact with it using the
-hosted version of the [Polkadot/Substrate
-Portal](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944)
-front-end by connecting to the local node endpoint. A hosted version is also
-available on [IPFS](https://dotapps.io/). You can
-also find the source code and instructions for hosting your own instance in the
-[`polkadot-js/apps`](https://github.com/polkadot-js/apps) repository.
+Run TPS benchmarks against the devnet:
 
-### Multi-Node Local Testnet
+```sh
+cd docker/devnet
+./benchmark-tps.sh
+```
 
-If you want to see the multi-node consensus algorithm in action, see [Simulate a
-network](https://docs.substrate.io/tutorials/build-a-blockchain/simulate-network/).
+Target: ≥50,000 TPS with 100 concurrent users
 
-## Template Structure
+## Token Operations
 
-A Substrate project such as this consists of a number of components that are
-spread across a few directories.
+### ORIUM (ORM) Token
 
-### Node
+The native token with "or" address prefix:
 
-A blockchain node is an application that allows users to participate in a
-blockchain network. Substrate-based blockchain nodes expose a number of
-capabilities:
+```sh
+# Check balance
+curl -H "Content-Type: application/json" -d '{"id":1, "jsonrpc":"2.0", "method": "system_account", "params": ["5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"]}' http://localhost:9933
 
-- Networking: Substrate nodes use the [`libp2p`](https://libp2p.io/) networking
-  stack to allow the nodes in the network to communicate with one another.
-- Consensus: Blockchains must have a way to come to
-  [consensus](https://docs.substrate.io/fundamentals/consensus/) on the state of
-  the network. Substrate makes it possible to supply custom consensus engines
-  and also ships with several consensus mechanisms that have been built on top
-  of [Web3 Foundation
-  research](https://research.web3.foundation/Polkadot/protocols/NPoS).
-- RPC Server: A remote procedure call (RPC) server is used to interact with
-  Substrate nodes.
+# Transfer tokens (via Polkadot-JS Apps)
+# Navigate to: http://localhost:9944 -> Extrinsics -> oriumToken.transfer
+```
 
-There are several files in the `node` directory. Take special note of the
-following:
+### Stablecoins (dUSD/dEUR)
 
-- [`chain_spec.rs`](./node/src/chain_spec.rs): A [chain
-  specification](https://docs.substrate.io/build/chain-spec/) is a source code
-  file that defines a Substrate chain's initial (genesis) state. Chain
-  specifications are useful for development and testing, and critical when
-  architecting the launch of a production chain. Take note of the
-  `development_config` and `testnet_genesis` functions. These functions are
-  used to define the genesis state for the local development chain
-  configuration. These functions identify some [well-known
-  accounts](https://docs.substrate.io/reference/command-line-tools/subkey/) and
-  use them to configure the blockchain's initial state.
-- [`service.rs`](./node/src/service.rs): This file defines the node
-  implementation. Take note of the libraries that this file imports and the
-  names of the functions it invokes. In particular, there are references to
-  consensus-related topics, such as the [block finalization and
-  forks](https://docs.substrate.io/fundamentals/consensus/#finalization-and-forks)
-  and other [consensus
-  mechanisms](https://docs.substrate.io/fundamentals/consensus/#default-consensus-models)
-  such as Aura for block authoring and GRANDPA for finality.
+Create Collateralized Debt Position (CDP):
+
+```sh
+# 1. Deposit ORM collateral
+# Extrinsics -> collateralEngine.createCdp(collateral_amount)
+
+# 2. Mint dUSD stablecoin
+# Extrinsics -> collateralEngine.mintDusd(amount)
+
+# 3. Mint dEUR stablecoin  
+# Extrinsics -> collateralEngine.mintDeur(amount)
+
+# 4. Repay debt
+# Extrinsics -> collateralEngine.repayDusd(amount)
+# Extrinsics -> collateralEngine.repayDeur(amount)
+
+# 5. Withdraw collateral
+# Extrinsics -> collateralEngine.withdrawCollateral(amount)
+```
+
+**Collateral Requirements:**
+- Minimum 150% collateralization ratio
+- Liquidation threshold: 130%
+- Stability fee: 2% annually
+
+### Web Interface
+
+Connect to your node using [Polkadot-JS Apps](https://polkadot.js.org/apps/#/explorer?rpc=ws://localhost:9944):
+
+1. **Development Node**: ws://localhost:9944
+2. **Devnet Validators**:
+   - Validator 1: ws://localhost:9944
+   - Validator 2: ws://localhost:9945  
+   - Validator 3: ws://localhost:9946
+   - Validator 4: ws://localhost:9947
+
+### Testing
+
+Run the complete test suite:
+
+```sh
+# Unit and integration tests
+cargo test --workspace
+
+# Property-based fuzzing tests
+cargo test --package orium-blockchain --test fuzzing_tests
+
+# Lint and security checks
+cargo clippy --workspace --all-targets --all-features -- -D warnings
+cargo audit
+```
+
+## Architecture
+
+The ORIUM blockchain consists of several key components:
+
+### Node (`/node`)
+
+The blockchain node implementation with:
+
+- **Networking**: libp2p for peer-to-peer communication
+- **Consensus**: BABE (block production) + GRANDPA (finality)
+- **RPC Server**: JSON-RPC interface for external interactions
+
+Key files:
+- [`chain_spec.rs`](./node/src/chain_spec.rs): Genesis configuration with pre-funded accounts
+- [`service.rs`](./node/src/service.rs): Node service implementation and consensus setup
 
 
-### Runtime
+### Runtime (`/runtime`)
 
-In Substrate, the terms "runtime" and "state transition function" are analogous.
-Both terms refer to the core logic of the blockchain that is responsible for
-validating blocks and executing the state changes they define. The Substrate
-project in this repository uses
-[FRAME](https://docs.substrate.io/learn/runtime-development/#frame) to construct
-a blockchain runtime. FRAME allows runtime developers to declare domain-specific
-logic in modules called "pallets". At the heart of FRAME is a helpful [macro
-language](https://docs.substrate.io/reference/frame-macros/) that makes it easy
-to create pallets and flexibly compose them to create blockchains that can
-address [a variety of needs](https://substrate.io/ecosystem/projects/).
+The blockchain's state transition function built with [FRAME](https://docs.substrate.io/learn/runtime-development/#frame):
 
-Review the [FRAME runtime implementation](./runtime/src/lib.rs) included in this
-template and note the following:
+- **Block Time**: 2 seconds for fast finality
+- **Address Format**: "or" prefix for ORIUM addresses
+- **Governance**: Sudo-based (upgradeable to democracy)
 
-- This file configures several pallets to include in the runtime. Each pallet
-  configuration is defined by a code block that begins with `impl
-  $PALLET_NAME::Config for Runtime`.
-- The pallets are composed into a single runtime by way of the
-  [#[runtime]](https://paritytech.github.io/polkadot-sdk/master/frame_support/attr.runtime.html)
-  macro, which is part of the [core FRAME pallet
-  library](https://docs.substrate.io/reference/frame-pallets/#system-pallets).
+See [`runtime/src/lib.rs`](./runtime/src/lib.rs) for pallet configuration.
 
-### Pallets
+### Custom Pallets (`/pallets`)
 
-The runtime in this project is constructed using many FRAME pallets that ship
-with [the Substrate
-repository](https://github.com/paritytech/polkadot-sdk/tree/master/substrate/frame) and a
-template pallet that is [defined in the
-`pallets`](./pallets/template/src/lib.rs) directory.
+**ORIUM Token** (`pallet-orium-token`):
+- Native ORM token with standard transfer functionality
+- Integrated with collateral engine for CDP operations
 
-A FRAME pallet is comprised of a number of blockchain primitives, including:
+**Stablecoins** (`pallet-dusd`, `pallet-deur`):
+- USD and EUR-pegged stablecoins
+- Minted through collateralized debt positions
 
-- Storage: FRAME defines a rich set of powerful [storage
-  abstractions](https://docs.substrate.io/build/runtime-storage/) that makes it
-  easy to use Substrate's efficient key-value database to manage the evolving
-  state of a blockchain.
-- Dispatchables: FRAME pallets define special types of functions that can be
-  invoked (dispatched) from outside of the runtime in order to update its state.
-- Events: Substrate uses
-  [events](https://docs.substrate.io/build/events-and-errors/) to notify users
-  of significant state changes.
-- Errors: When a dispatchable fails, it returns an error.
+**Collateral Engine** (`pallet-collateral-engine`):
+- MakerDAO-style CDP system
+- 150% minimum collateralization, 130% liquidation threshold
+- Supports ORM collateral for dUSD/dEUR minting
 
-Each pallet has its own `Config` trait which serves as a configuration interface
-to generically define the types and parameters it depends on.
+Each pallet includes:
+- **Storage**: Efficient key-value state management
+- **Dispatchables**: External callable functions
+- **Events**: State change notifications  
+- **Errors**: Comprehensive error handling
 
-## Alternatives Installations
+## Documentation
 
-Instead of installing dependencies and building this source directly, consider
-the following alternatives.
+- **[Security Audit](./docs/SECURITY_AUDIT.md)**: Comprehensive security analysis and vulnerability assessment
+- **[Performance Report](./docs/PERFORMANCE_REPORT.md)**: TPS benchmarking results and optimization recommendations
+- **[Installation Guide](./docs/INSTALLATION.md)**: Detailed setup instructions for all platforms
+- **[Token Usage](./docs/TOKEN_USAGE.md)**: Complete guide to ORM, dUSD, and dEUR operations
+- **[Architecture Overview](./docs/ARCHITECTURE.md)**: Technical deep-dive into system design
 
-### Nix
+## Development
 
-Install [nix](https://nixos.org/) and
-[nix-direnv](https://github.com/nix-community/nix-direnv) for a fully
-plug-and-play experience for setting up the development environment. To get all
-the correct dependencies, activate direnv `direnv allow`.
+### CI/CD Pipeline
 
-### Docker
+GitHub Actions automatically:
+- Builds and tests all code changes
+- Runs security audits and lint checks
+- Builds Docker images for deployment
+- Executes integration tests on devnet
 
-Please follow the [Substrate Docker instructions
-here](https://github.com/paritytech/polkadot-sdk/blob/master/substrate/docker/README.md) to
-build the Docker container with the Substrate Node Template binary.
+### Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/amazing-feature`
+3. Make your changes and add tests
+4. Run the test suite: `cargo test --workspace`
+5. Submit a pull request
+
+## License
+
+Licensed under the MIT License. See [LICENSE](./LICENSE) for details.
+
+## Support
+
+- **Issues**: [GitHub Issues](https://github.com/bleakhash/orium_blockchain/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/bleakhash/orium_blockchain/discussions)
+- **Documentation**: [Substrate Documentation](https://docs.substrate.io/)

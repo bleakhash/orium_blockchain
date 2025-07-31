@@ -52,296 +52,442 @@ pub use weights::*;
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 #[frame_support::pallet]
 pub mod pallet {
-	// Import various useful types required by all FRAME pallets.
-	use super::*;
-	use frame_support::{
-		pallet_prelude::*,
-		traits::{Currency, Get, ReservableCurrency},
-	};
-	use frame_system::pallet_prelude::*;
-	use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating, Zero};
-	use sp_std::{fmt::Debug, vec::Vec};
+    // Import various useful types required by all FRAME pallets.
+    use super::*;
+    use frame_support::{
+        pallet_prelude::*,
+        traits::{Get, ReservableCurrency},
+    };
+    use frame_system::pallet_prelude::*;
+    use sp_runtime::traits::{
+        AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, SaturatedConversion, Saturating,
+        Zero,
+    };
+    use sp_std::vec::Vec;
 
-	// The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
-	// (`Call`s) in this pallet.
-	#[pallet::pallet]
-	pub struct Pallet<T>(_);
+    // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
+    // (`Call`s) in this pallet.
+    #[allow(clippy::manual_inspect)]
+    #[pallet::pallet]
+    pub struct Pallet<T>(_);
 
-	/// The pallet's configuration trait.
-	#[pallet::config]
-	pub trait Config: frame_system::Config {
-		/// The overarching runtime event type.
-		#[allow(deprecated)]
-		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-		/// A type representing the weights required by the dispatchables of this pallet.
-		type WeightInfo: WeightInfo;
-		type Balance: Parameter + Member + AtLeast32BitUnsigned + Default + Copy + MaybeSerializeDeserialize + MaxEncodedLen;
-		type Currency: Currency<Self::AccountId, Balance = Self::Balance>;
-		type MinCollateralRatio: Get<u32>;
-		type LiquidationRatio: Get<u32>;
-		type StabilityFee: Get<u32>;
-	}
+    /// The pallet's configuration trait.
+    #[pallet::config]
+    pub trait Config: frame_system::Config {
+        /// The overarching runtime event type.
+        #[allow(deprecated)]
+        type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+        /// A type representing the weights required by the dispatchables of this pallet.
+        type WeightInfo: WeightInfo;
+        type Balance: Parameter
+            + Member
+            + AtLeast32BitUnsigned
+            + Default
+            + Copy
+            + MaybeSerializeDeserialize
+            + MaxEncodedLen;
+        type Currency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
+        type MinCollateralRatio: Get<u32>;
+        type LiquidationRatio: Get<u32>;
+        type StabilityFee: Get<u32>;
+    }
 
-	#[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
-	pub struct Cdp<Balance> {
-		pub collateral: Balance,
-		pub dusd_debt: Balance,
-		pub deur_debt: Balance,
-		pub last_update: u32,
-	}
+    #[derive(Encode, Decode, Clone, PartialEq, Eq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+    pub struct Cdp<Balance> {
+        pub collateral: Balance,
+        pub dusd_debt: Balance,
+        pub deur_debt: Balance,
+        pub last_update: u32,
+    }
 
-	#[pallet::storage]
-	pub type Cdps<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, Cdp<T::Balance>, OptionQuery>;
+    #[pallet::storage]
+    pub type Cdps<T: Config> =
+        StorageMap<_, Blake2_128Concat, T::AccountId, Cdp<T::Balance>, OptionQuery>;
 
-	#[pallet::storage]
-	pub type TotalCollateral<T> = StorageValue<_, T::Balance, ValueQuery>;
+    #[pallet::storage]
+    pub type TotalCollateral<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
-	#[pallet::storage]
-	pub type TotalDusdDebt<T> = StorageValue<_, T::Balance, ValueQuery>;
+    #[pallet::storage]
+    pub type TotalDusdDebt<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
-	#[pallet::storage]
-	pub type TotalDeurDebt<T> = StorageValue<_, T::Balance, ValueQuery>;
+    #[pallet::storage]
+    pub type TotalDeurDebt<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
-	#[pallet::storage]
-	pub type OrmUsdPrice<T> = StorageValue<_, u128, ValueQuery>;
+    #[pallet::storage]
+    pub type OrmUsdPrice<T> = StorageValue<_, u128, ValueQuery>;
 
-	#[pallet::storage]
-	pub type OrmEurPrice<T> = StorageValue<_, u128, ValueQuery>;
+    #[pallet::storage]
+    pub type OrmEurPrice<T> = StorageValue<_, u128, ValueQuery>;
 
-	#[pallet::storage]
-	pub type LiquidationQueue<T: Config> = StorageMap<_, Blake2_128Concat, T::AccountId, bool, ValueQuery>;
+    #[pallet::storage]
+    pub type LiquidationQueue<T: Config> =
+        StorageMap<_, Blake2_128Concat, T::AccountId, bool, ValueQuery>;
 
-	/// Events that functions in this pallet can emit.
-	#[pallet::event]
-	#[pallet::generate_deposit(pub(super) fn deposit_event)]
-	pub enum Event<T: Config> {
-		CdpCreated {
-			owner: T::AccountId,
-			collateral: T::Balance,
-		},
-		CollateralDeposited {
-			owner: T::AccountId,
-			amount: T::Balance,
-		},
-		CollateralWithdrawn {
-			owner: T::AccountId,
-			amount: T::Balance,
-		},
-		DusdMinted {
-			owner: T::AccountId,
-			amount: T::Balance,
-		},
-		DeurMinted {
-			owner: T::AccountId,
-			amount: T::Balance,
-		},
-		DusdRepaid {
-			owner: T::AccountId,
-			amount: T::Balance,
-		},
-		DeurRepaid {
-			owner: T::AccountId,
-			amount: T::Balance,
-		},
-		CdpLiquidated {
-			owner: T::AccountId,
-			liquidator: T::AccountId,
-			collateral_seized: T::Balance,
-		},
-		PriceUpdated {
-			asset: Vec<u8>,
-			price: u128,
-		},
-	}
+    /// Events that functions in this pallet can emit.
+    #[pallet::event]
+    #[pallet::generate_deposit(pub(super) fn deposit_event)]
+    pub enum Event<T: Config> {
+        CdpCreated {
+            owner: T::AccountId,
+            collateral: T::Balance,
+        },
+        CollateralDeposited {
+            owner: T::AccountId,
+            amount: T::Balance,
+        },
+        CollateralWithdrawn {
+            owner: T::AccountId,
+            amount: T::Balance,
+        },
+        DusdMinted {
+            owner: T::AccountId,
+            amount: T::Balance,
+        },
+        DeurMinted {
+            owner: T::AccountId,
+            amount: T::Balance,
+        },
+        DusdRepaid {
+            owner: T::AccountId,
+            amount: T::Balance,
+        },
+        DeurRepaid {
+            owner: T::AccountId,
+            amount: T::Balance,
+        },
+        CdpLiquidated {
+            owner: T::AccountId,
+            liquidator: T::AccountId,
+            collateral_seized: T::Balance,
+        },
+        PriceUpdated {
+            asset: Vec<u8>,
+            price: u128,
+        },
+    }
 
-	/// Errors that can be returned by this pallet.
-	#[pallet::error]
-	pub enum Error<T> {
-		CdpNotFound,
-		CdpAlreadyExists,
-		InsufficientCollateral,
-		CollateralRatioTooLow,
-		CdpUndercollateralized,
-		InsufficientDebt,
-		PriceNotAvailable,
-		Overflow,
-		NotAuthorized,
-		CdpNotLiquidatable,
-	}
+    /// Errors that can be returned by this pallet.
+    #[pallet::error]
+    pub enum Error<T> {
+        CdpNotFound,
+        CdpAlreadyExists,
+        InsufficientCollateral,
+        CollateralRatioTooLow,
+        CdpUndercollateralized,
+        InsufficientDebt,
+        PriceNotAvailable,
+        Overflow,
+        NotAuthorized,
+        CdpNotLiquidatable,
+    }
 
-	/// The pallet's dispatchable functions for CDP management.
-	#[pallet::call]
-	impl<T: Config> Pallet<T> {
-		#[pallet::call_index(0)]
-		#[pallet::weight(T::WeightInfo::do_something())]
-		pub fn create_cdp(
-			origin: OriginFor<T>,
-			collateral_amount: T::Balance,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			
-			ensure!(!Cdps::<T>::contains_key(&who), Error::<T>::CdpAlreadyExists);
-			
-			T::Currency::reserve(&who, collateral_amount)?;
-			
-			let cdp = Cdp {
-				collateral: collateral_amount,
-				dusd_debt: Zero::zero(),
-				deur_debt: Zero::zero(),
-				last_update: frame_system::Pallet::<T>::block_number().saturated_into(),
-			};
-			
-			Cdps::<T>::insert(&who, &cdp);
-			TotalCollateral::<T>::mutate(|total| *total = total.saturating_add(collateral_amount));
-			
-			Self::deposit_event(Event::CdpCreated { owner: who, collateral: collateral_amount });
-			
-			Ok(())
-		}
+    /// The pallet's dispatchable functions for CDP management.
+    #[pallet::call]
+    impl<T: Config> Pallet<T> {
+        #[pallet::call_index(0)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn create_cdp(origin: OriginFor<T>, collateral_amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
 
-		#[pallet::call_index(1)]
-		#[pallet::weight(T::WeightInfo::cause_error())]
-		pub fn deposit_collateral(
-			origin: OriginFor<T>,
-			amount: T::Balance,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			
-			let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
-			
-			T::Currency::reserve(&who, amount)?;
-			
-			// Update CDP
-			cdp.collateral = cdp.collateral.saturating_add(amount);
-			cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
-			
-			Cdps::<T>::insert(&who, &cdp);
-			TotalCollateral::<T>::mutate(|total| *total = total.saturating_add(amount));
-			
-			Self::deposit_event(Event::CollateralDeposited { owner: who, amount });
-			
-			Ok(())
-		}
+            ensure!(!Cdps::<T>::contains_key(&who), Error::<T>::CdpAlreadyExists);
 
-		#[pallet::call_index(2)]
-		#[pallet::weight(T::WeightInfo::cause_error())]
-		pub fn withdraw_collateral(
-			origin: OriginFor<T>,
-			amount: T::Balance,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			
-			let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
-			
-			ensure!(cdp.collateral >= amount, Error::<T>::InsufficientCollateral);
-			
-			let new_collateral = cdp.collateral.saturating_sub(amount);
-			
-			if !cdp.dusd_debt.is_zero() || !cdp.deur_debt.is_zero() {
-				ensure!(
-					Self::check_collateral_ratio(&who, new_collateral, cdp.dusd_debt, cdp.deur_debt)?,
-					Error::<T>::CollateralRatioTooLow
-				);
-			}
-			
-			// Update CDP
-			cdp.collateral = new_collateral;
-			cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
-			
-			T::Currency::unreserve(&who, amount);
-			Cdps::<T>::insert(&who, &cdp);
-			TotalCollateral::<T>::mutate(|total| *total = total.saturating_sub(amount));
-			
-			Self::deposit_event(Event::CollateralWithdrawn { owner: who, amount });
-			
-			Ok(())
-		}
+            T::Currency::reserve(&who, collateral_amount)?;
 
-		#[pallet::call_index(3)]
-		#[pallet::weight(T::WeightInfo::do_something())]
-		pub fn mint_dusd(
-			origin: OriginFor<T>,
-			amount: T::Balance,
-		) -> DispatchResult {
-			let who = ensure_signed(origin)?;
-			
-			let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
-			
-			let new_dusd_debt = cdp.dusd_debt.saturating_add(amount);
-			
-			ensure!(
-				Self::check_collateral_ratio(&who, cdp.collateral, new_dusd_debt, cdp.deur_debt)?,
-				Error::<T>::CollateralRatioTooLow
-			);
-			
-			// Update CDP
-			cdp.dusd_debt = new_dusd_debt;
-			cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
-			
-			Cdps::<T>::insert(&who, &cdp);
-			TotalDusdDebt::<T>::mutate(|total| *total = total.saturating_add(amount));
-			
-			
-			Self::deposit_event(Event::DusdMinted { owner: who, amount });
-			
-			Ok(())
-		}
+            let cdp = Cdp {
+                collateral: collateral_amount,
+                dusd_debt: Zero::zero(),
+                deur_debt: Zero::zero(),
+                last_update: frame_system::Pallet::<T>::block_number().saturated_into(),
+            };
 
-		#[pallet::call_index(4)]
-		#[pallet::weight(T::WeightInfo::cause_error())]
-		pub fn update_price(
-			origin: OriginFor<T>,
-			asset: Vec<u8>,
-			price: u128,
-		) -> DispatchResult {
-			ensure_root(origin)?;
-			
-			// Update price based on asset
-			if asset == b"ORM/USD" {
-				OrmUsdPrice::<T>::put(price);
-			} else if asset == b"ORM/EUR" {
-				OrmEurPrice::<T>::put(price);
-			}
-			
-			Self::deposit_event(Event::PriceUpdated { asset, price });
-			
-			Ok(())
-		}
-	}
+            Cdps::<T>::insert(&who, &cdp);
+            TotalCollateral::<T>::mutate(|total| *total = total.saturating_add(collateral_amount));
 
-	impl<T: Config> Pallet<T> {
-		fn check_collateral_ratio(
-			_who: &T::AccountId,
-			collateral: T::Balance,
-			dusd_debt: T::Balance,
-			deur_debt: T::Balance,
-		) -> Result<bool, Error<T>> {
-			let orm_usd_price = OrmUsdPrice::<T>::get();
-			let orm_eur_price = OrmEurPrice::<T>::get();
-			
-			ensure!(!orm_usd_price.is_zero(), Error::<T>::PriceNotAvailable);
-			ensure!(!orm_eur_price.is_zero(), Error::<T>::PriceNotAvailable);
-			
-			let collateral_value_usd = (collateral.saturated_into::<u128>())
-				.saturating_mul(orm_usd_price)
-				.saturating_div(1_000_000_000_000_000_000u128); // Scale down from 1e18
-			
-			let dusd_debt_value = dusd_debt.saturated_into::<u128>();
-			let deur_debt_value_usd = (deur_debt.saturated_into::<u128>())
-				.saturating_mul(orm_eur_price)
-				.saturating_div(orm_usd_price); // Convert EUR to USD
-			
-			let total_debt_usd = dusd_debt_value.saturating_add(deur_debt_value_usd);
-			
-			if total_debt_usd.is_zero() {
-				return Ok(true);
-			}
-			
-			let ratio = collateral_value_usd
-				.saturating_mul(10000u128)
-				.saturating_div(total_debt_usd);
-			
-			Ok(ratio >= T::MinCollateralRatio::get() as u128)
-		}
-	}
+            Self::deposit_event(Event::CdpCreated {
+                owner: who,
+                collateral: collateral_amount,
+            });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(1)]
+        #[pallet::weight(T::WeightInfo::cause_error())]
+        pub fn deposit_collateral(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            T::Currency::reserve(&who, amount)?;
+
+            // Update CDP
+            cdp.collateral = cdp.collateral.saturating_add(amount);
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalCollateral::<T>::mutate(|total| *total = total.saturating_add(amount));
+
+            Self::deposit_event(Event::CollateralDeposited { owner: who, amount });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(2)]
+        #[pallet::weight(T::WeightInfo::cause_error())]
+        pub fn withdraw_collateral(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            ensure!(cdp.collateral >= amount, Error::<T>::InsufficientCollateral);
+
+            let new_collateral = cdp.collateral.saturating_sub(amount);
+
+            if !cdp.dusd_debt.is_zero() || !cdp.deur_debt.is_zero() {
+                ensure!(
+                    Self::check_collateral_ratio(
+                        &who,
+                        new_collateral,
+                        cdp.dusd_debt,
+                        cdp.deur_debt
+                    )?,
+                    Error::<T>::CollateralRatioTooLow
+                );
+            }
+
+            // Update CDP
+            cdp.collateral = new_collateral;
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            T::Currency::unreserve(&who, amount);
+            Cdps::<T>::insert(&who, &cdp);
+            TotalCollateral::<T>::mutate(|total| *total = total.saturating_sub(amount));
+
+            Self::deposit_event(Event::CollateralWithdrawn { owner: who, amount });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(3)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn mint_dusd(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            let new_dusd_debt = cdp.dusd_debt.saturating_add(amount);
+
+            ensure!(
+                Self::check_collateral_ratio(&who, cdp.collateral, new_dusd_debt, cdp.deur_debt)?,
+                Error::<T>::CollateralRatioTooLow
+            );
+
+            // Update CDP
+            cdp.dusd_debt = new_dusd_debt;
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalDusdDebt::<T>::mutate(|total| *total = total.saturating_add(amount));
+
+            Self::deposit_event(Event::DusdMinted { owner: who, amount });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(4)]
+        #[pallet::weight(T::WeightInfo::cause_error())]
+        pub fn update_price(origin: OriginFor<T>, asset: Vec<u8>, price: u128) -> DispatchResult {
+            ensure_root(origin)?;
+
+            // Update price based on asset
+            if asset == b"ORM/USD" {
+                OrmUsdPrice::<T>::put(price);
+            } else if asset == b"ORM/EUR" {
+                OrmEurPrice::<T>::put(price);
+            }
+
+            Self::deposit_event(Event::PriceUpdated { asset, price });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(5)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn liquidate(origin: OriginFor<T>, cdp_owner: T::AccountId) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let cdp = Cdps::<T>::get(&cdp_owner).ok_or(Error::<T>::CdpNotFound)?;
+
+            let orm_usd_price = OrmUsdPrice::<T>::get();
+            let orm_eur_price = OrmEurPrice::<T>::get();
+
+            ensure!(!orm_usd_price.is_zero(), Error::<T>::PriceNotAvailable);
+            ensure!(!orm_eur_price.is_zero(), Error::<T>::PriceNotAvailable);
+
+            let collateral_value_usd = (cdp.collateral.saturated_into::<u128>())
+                .saturating_mul(orm_usd_price)
+                .saturating_div(100_000u128);
+
+            let dusd_debt_value = cdp.dusd_debt.saturated_into::<u128>();
+            let deur_debt_value_usd = (cdp.deur_debt.saturated_into::<u128>())
+                .saturating_mul(orm_eur_price)
+                .saturating_div(orm_usd_price);
+
+            let total_debt_usd = dusd_debt_value.saturating_add(deur_debt_value_usd);
+
+            if !total_debt_usd.is_zero() {
+                let ratio = collateral_value_usd
+                    .saturating_mul(10000u128)
+                    .saturating_div(total_debt_usd);
+
+                ensure!(
+                    ratio < T::LiquidationRatio::get() as u128,
+                    Error::<T>::CdpNotLiquidatable
+                );
+            }
+
+            T::Currency::unreserve(&cdp_owner, cdp.collateral);
+
+            // Update totals
+            TotalCollateral::<T>::mutate(|total| *total = total.saturating_sub(cdp.collateral));
+            TotalDusdDebt::<T>::mutate(|total| *total = total.saturating_sub(cdp.dusd_debt));
+            TotalDeurDebt::<T>::mutate(|total| *total = total.saturating_sub(cdp.deur_debt));
+
+            Cdps::<T>::remove(&cdp_owner);
+            LiquidationQueue::<T>::remove(&cdp_owner);
+
+            Self::deposit_event(Event::CdpLiquidated {
+                owner: cdp_owner,
+                liquidator: who,
+                collateral_seized: cdp.collateral,
+            });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(6)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn mint_deur(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            let new_deur_debt = cdp.deur_debt.saturating_add(amount);
+
+            ensure!(
+                Self::check_collateral_ratio(&who, cdp.collateral, cdp.dusd_debt, new_deur_debt)?,
+                Error::<T>::CollateralRatioTooLow
+            );
+
+            cdp.deur_debt = new_deur_debt;
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalDeurDebt::<T>::mutate(|total| *total = total.saturating_add(amount));
+
+            Self::deposit_event(Event::DeurMinted { owner: who, amount });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(7)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn repay_dusd(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            ensure!(cdp.dusd_debt >= amount, Error::<T>::InsufficientDebt);
+
+            cdp.dusd_debt = cdp.dusd_debt.saturating_sub(amount);
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalDusdDebt::<T>::mutate(|total| *total = total.saturating_sub(amount));
+
+            Self::deposit_event(Event::DusdRepaid { owner: who, amount });
+
+            Ok(())
+        }
+
+        #[pallet::call_index(8)]
+        #[pallet::weight(T::WeightInfo::do_something())]
+        pub fn repay_deur(origin: OriginFor<T>, amount: T::Balance) -> DispatchResult {
+            let who = ensure_signed(origin)?;
+
+            let mut cdp = Cdps::<T>::get(&who).ok_or(Error::<T>::CdpNotFound)?;
+
+            ensure!(cdp.deur_debt >= amount, Error::<T>::InsufficientDebt);
+
+            cdp.deur_debt = cdp.deur_debt.saturating_sub(amount);
+            cdp.last_update = frame_system::Pallet::<T>::block_number().saturated_into();
+
+            Cdps::<T>::insert(&who, &cdp);
+            TotalDeurDebt::<T>::mutate(|total| *total = total.saturating_sub(amount));
+
+            Self::deposit_event(Event::DeurRepaid { owner: who, amount });
+
+            Ok(())
+        }
+    }
+
+    impl<T: Config> Pallet<T> {
+        pub fn cdps(account: &T::AccountId) -> Option<Cdp<T::Balance>> {
+            Cdps::<T>::get(account)
+        }
+
+        pub fn total_collateral() -> T::Balance {
+            TotalCollateral::<T>::get()
+        }
+
+        pub fn total_dusd_debt() -> T::Balance {
+            TotalDusdDebt::<T>::get()
+        }
+
+        pub fn total_deur_debt() -> T::Balance {
+            TotalDeurDebt::<T>::get()
+        }
+
+        pub fn orm_usd_price() -> u128 {
+            OrmUsdPrice::<T>::get()
+        }
+
+        pub fn orm_eur_price() -> u128 {
+            OrmEurPrice::<T>::get()
+        }
+
+        fn check_collateral_ratio(
+            _who: &T::AccountId,
+            collateral: T::Balance,
+            dusd_debt: T::Balance,
+            deur_debt: T::Balance,
+        ) -> Result<bool, Error<T>> {
+            let orm_usd_price = OrmUsdPrice::<T>::get();
+            let orm_eur_price = OrmEurPrice::<T>::get();
+
+            ensure!(!orm_usd_price.is_zero(), Error::<T>::PriceNotAvailable);
+            ensure!(!orm_eur_price.is_zero(), Error::<T>::PriceNotAvailable);
+
+            let collateral_value_usd = (collateral.saturated_into::<u128>())
+                .saturating_mul(orm_usd_price)
+                .saturating_div(100_000u128); // Scale down from price format (100,000 = $1.00)
+
+            let dusd_debt_value = dusd_debt.saturated_into::<u128>();
+            let deur_debt_value_usd = (deur_debt.saturated_into::<u128>())
+                .saturating_mul(orm_eur_price)
+                .saturating_div(orm_usd_price); // Convert EUR to USD
+
+            let total_debt_usd = dusd_debt_value.saturating_add(deur_debt_value_usd);
+
+            if total_debt_usd.is_zero() {
+                return Ok(true);
+            }
+
+            let ratio = collateral_value_usd
+                .saturating_mul(100u128)
+                .saturating_div(total_debt_usd);
+
+            Ok(ratio >= T::MinCollateralRatio::get() as u128)
+        }
+    }
 }

@@ -34,6 +34,11 @@ jobs:
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
 
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang libclang-dev cmake build-essential git pkg-config libssl-dev protobuf-compiler
+
       - name: Run cargo check
         uses: actions-rs/cargo@v1
         with:
@@ -204,7 +209,7 @@ jobs:
           args: --release --bin orium-node -- benchmark pallet --chain dev --pallet "*" --extrinsic "*" --steps 50 --repeat 20 --output ./benchmarks/
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: ./benchmarks/
@@ -297,7 +302,7 @@ jobs:
 
       - name: Upload devnet logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: devnet-logs
           path: docker/devnet/devnet-logs.txt

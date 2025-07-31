@@ -32,13 +32,17 @@
 use frame_support::{traits::Get, weights::{Weight, constants::RocksDbWeight}};
 use core::marker::PhantomData;
 
-/// Weight functions needed for pallet_template.
+/// Weight functions needed for pallet_collateral_engine.
 pub trait WeightInfo {
 	fn do_something() -> Weight;
 	fn cause_error() -> Weight;
+	fn liquidate() -> Weight;
+	fn mint_deur() -> Weight;
+	fn repay_dusd() -> Weight;
+	fn repay_deur() -> Weight;
 }
 
-/// Weights for pallet_template using the Substrate node and recommended hardware.
+/// Weights for pallet_collateral_engine using the Substrate node and recommended hardware.
 pub struct SubstrateWeight<T>(PhantomData<T>);
 impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 	/// Storage: Template Something (r:0 w:1)
@@ -61,6 +65,50 @@ impl<T: frame_system::Config> WeightInfo for SubstrateWeight<T> {
 		Weight::from_parts(6_000_000, 1489)
 			.saturating_add(T::DbWeight::get().reads(1_u64))
 			.saturating_add(T::DbWeight::get().writes(1_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalCollateral (r:0 w:1), TotalDusdDebt (r:0 w:1), TotalDeurDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalCollateral, TotalDusdDebt, TotalDeurDebt
+	fn liquidate() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `128`
+		//  Estimated: `2048`
+		// Minimum execution time: 15_000_000 picoseconds.
+		Weight::from_parts(16_000_000, 2048)
+			.saturating_add(T::DbWeight::get().reads(3_u64))
+			.saturating_add(T::DbWeight::get().writes(4_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalDeurDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalDeurDebt
+	fn mint_deur() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `96`
+		//  Estimated: `1536`
+		// Minimum execution time: 12_000_000 picoseconds.
+		Weight::from_parts(13_000_000, 1536)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalDusdDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalDusdDebt
+	fn repay_dusd() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `96`
+		//  Estimated: `1536`
+		// Minimum execution time: 10_000_000 picoseconds.
+		Weight::from_parts(11_000_000, 1536)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalDeurDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalDeurDebt
+	fn repay_deur() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `96`
+		//  Estimated: `1536`
+		// Minimum execution time: 10_000_000 picoseconds.
+		Weight::from_parts(11_000_000, 1536)
+			.saturating_add(T::DbWeight::get().reads(1_u64))
+			.saturating_add(T::DbWeight::get().writes(2_u64))
 	}
 }
 
@@ -86,5 +134,49 @@ impl WeightInfo for () {
 		Weight::from_parts(6_000_000, 1489)
 			.saturating_add(RocksDbWeight::get().reads(1_u64))
 			.saturating_add(RocksDbWeight::get().writes(1_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalCollateral (r:0 w:1), TotalDusdDebt (r:0 w:1), TotalDeurDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalCollateral, TotalDusdDebt, TotalDeurDebt
+	fn liquidate() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `128`
+		//  Estimated: `2048`
+		// Minimum execution time: 15_000_000 picoseconds.
+		Weight::from_parts(16_000_000, 2048)
+			.saturating_add(RocksDbWeight::get().reads(3_u64))
+			.saturating_add(RocksDbWeight::get().writes(4_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalDeurDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalDeurDebt
+	fn mint_deur() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `96`
+		//  Estimated: `1536`
+		// Minimum execution time: 12_000_000 picoseconds.
+		Weight::from_parts(13_000_000, 1536)
+			.saturating_add(RocksDbWeight::get().reads(1_u64))
+			.saturating_add(RocksDbWeight::get().writes(2_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalDusdDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalDusdDebt
+	fn repay_dusd() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `96`
+		//  Estimated: `1536`
+		// Minimum execution time: 10_000_000 picoseconds.
+		Weight::from_parts(11_000_000, 1536)
+			.saturating_add(RocksDbWeight::get().reads(1_u64))
+			.saturating_add(RocksDbWeight::get().writes(2_u64))
+	}
+	/// Storage: CollateralEngine Cdps (r:1 w:1), TotalDeurDebt (r:0 w:1)
+	/// Proof: CollateralEngine Cdps, TotalDeurDebt
+	fn repay_deur() -> Weight {
+		// Proof Size summary in bytes:
+		//  Measured:  `96`
+		//  Estimated: `1536`
+		// Minimum execution time: 10_000_000 picoseconds.
+		Weight::from_parts(11_000_000, 1536)
+			.saturating_add(RocksDbWeight::get().reads(1_u64))
+			.saturating_add(RocksDbWeight::get().writes(2_u64))
 	}
 }

@@ -35,8 +35,11 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     traits::{Block as BlockT, NumberFor},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult, RuntimeString,
+    ApplyExtrinsicResult,
 };
+
+#[cfg(feature = "runtime-benchmarks")]
+use sp_runtime::RuntimeString;
 use sp_version::RuntimeVersion;
 
 #[cfg(feature = "runtime-benchmarks")]

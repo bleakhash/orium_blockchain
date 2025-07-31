@@ -5,9 +5,9 @@ use crate::{
     service,
 };
 use frame_benchmarking_cli::{BenchmarkCmd, ExtrinsicFactory, SUBSTRATE_REFERENCE_HARDWARE};
+use orium_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use sc_cli::SubstrateCli;
 use sc_service::PartialComponents;
-use solochain_template_runtime::{Block, EXISTENTIAL_DEPOSIT};
 use sp_keyring::Sr25519Keyring;
 
 impl SubstrateCli for Cli {
@@ -47,6 +47,7 @@ impl SubstrateCli for Cli {
 }
 
 /// Parse and run command line arguments
+#[allow(clippy::result_large_err)]
 pub fn run() -> sc_cli::Result<()> {
     let cli = Cli::from_args();
 
@@ -70,8 +71,16 @@ pub fn run() -> sc_cli::Result<()> {
             })
         }
         Some(Subcommand::ExportChainSpec(cmd)) => {
-            let chain_spec = cli.load_spec(&cmd.chain)?;
-            cmd.run(chain_spec)
+            let chain_spec = cli.load_spec(cmd.shared_params.chain.as_deref().unwrap_or("dev"))?;
+            cmd.run(
+                chain_spec,
+                sc_network::config::NetworkConfiguration::new::<String, String>(
+                    "orium-node".to_string(),
+                    "orium-node".to_string(),
+                    Default::default(),
+                    None,
+                ),
+            )
         }
         Some(Subcommand::ExportBlocks(cmd)) => {
             let runner = cli.create_runner(cmd)?;
@@ -163,21 +172,20 @@ pub fn run() -> sc_cli::Result<()> {
                         } = service::new_partial(&config)?;
                         let db = backend.expose_db();
                         let storage = backend.expose_storage();
-                        let shared_cache = backend.expose_shared_trie_cache();
+                        backend.reset_trie_cache();
 
-                        cmd.run(config, client, db, storage, shared_cache)
+                        cmd.run(config, client, db, storage)
                     }
                     BenchmarkCmd::Overhead(cmd) => {
                         let PartialComponents { client, .. } = service::new_partial(&config)?;
                         let ext_builder = RemarkBuilder::new(client.clone());
 
                         cmd.run(
-                            config.chain_spec.name().into(),
-                            client,
+                            config,
+                            client.clone(),
                             inherent_benchmark_data()?,
                             Vec::new(),
                             &ext_builder,
-                            false,
                         )
                     }
                     BenchmarkCmd::Extrinsic(cmd) => {
@@ -208,17 +216,18 @@ pub fn run() -> sc_cli::Result<()> {
             let runner = cli.create_runner(&cli.run)?;
             runner.run_node_until_exit(|config| async move {
                 match config.network.network_backend {
-					sc_network::config::NetworkBackendType::Libp2p => service::new_full::<
-						sc_network::NetworkWorker<
-							solochain_template_runtime::opaque::Block,
-							<solochain_template_runtime::opaque::Block as sp_runtime::traits::Block>::Hash,
-						>,
-					>(config)
-					.map_err(sc_cli::Error::Service),
-					sc_network::config::NetworkBackendType::Litep2p =>
-						service::new_full::<sc_network::Litep2pNetworkBackend>(config)
-							.map_err(sc_cli::Error::Service),
-				}
+                    sc_network::config::NetworkBackendType::Libp2p => service::new_full::<
+                        sc_network::NetworkWorker<
+                            orium_runtime::opaque::Block,
+                            <orium_runtime::opaque::Block as sp_runtime::traits::Block>::Hash,
+                        >,
+                    >(config)
+                    .map_err(sc_cli::Error::Service),
+                    sc_network::config::NetworkBackendType::Litep2p => {
+                        service::new_full::<sc_network::Litep2pNetworkBackend>(config)
+                            .map_err(sc_cli::Error::Service)
+                    }
+                }
             })
         }
     }

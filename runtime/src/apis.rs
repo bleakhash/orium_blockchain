@@ -35,7 +35,7 @@ use sp_core::{crypto::KeyTypeId, OpaqueMetadata};
 use sp_runtime::{
     traits::{Block as BlockT, NumberFor},
     transaction_validity::{TransactionSource, TransactionValidity},
-    ApplyExtrinsicResult,
+    ApplyExtrinsicResult, RuntimeString,
 };
 use sp_version::RuntimeVersion;
 

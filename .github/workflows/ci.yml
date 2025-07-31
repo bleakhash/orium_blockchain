@@ -209,7 +209,7 @@ jobs:
           args: --release --bin orium-node -- benchmark pallet --chain dev --pallet "*" --extrinsic "*" --steps 50 --repeat 20 --output ./benchmarks/
 
       - name: Upload benchmark results
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: benchmark-results
           path: ./benchmarks/
@@ -302,7 +302,7 @@ jobs:
 
       - name: Upload devnet logs
         if: always()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: devnet-logs
           path: docker/devnet/devnet-logs.txt

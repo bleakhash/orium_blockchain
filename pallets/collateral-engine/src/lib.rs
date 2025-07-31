@@ -56,13 +56,14 @@ pub mod pallet {
     use super::*;
     use frame_support::{
         pallet_prelude::*,
-        traits::{Currency, Get, ReservableCurrency},
+        traits::{Get, ReservableCurrency},
     };
     use frame_system::pallet_prelude::*;
     use sp_runtime::traits::{
-        AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating, Zero,
+        AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, SaturatedConversion, Saturating,
+        Zero,
     };
-    use sp_std::{fmt::Debug, vec::Vec};
+    use sp_std::vec::Vec;
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
@@ -84,7 +85,7 @@ pub mod pallet {
             + Copy
             + MaybeSerializeDeserialize
             + MaxEncodedLen;
-        type Currency: Currency<Self::AccountId, Balance = Self::Balance>;
+        type Currency: ReservableCurrency<Self::AccountId, Balance = Self::Balance>;
         type MinCollateralRatio: Get<u32>;
         type LiquidationRatio: Get<u32>;
         type StabilityFee: Get<u32>;
@@ -103,13 +104,13 @@ pub mod pallet {
         StorageMap<_, Blake2_128Concat, T::AccountId, Cdp<T::Balance>, OptionQuery>;
 
     #[pallet::storage]
-    pub type TotalCollateral<T> = StorageValue<_, T::Balance, ValueQuery>;
+    pub type TotalCollateral<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
     #[pallet::storage]
-    pub type TotalDusdDebt<T> = StorageValue<_, T::Balance, ValueQuery>;
+    pub type TotalDusdDebt<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
     #[pallet::storage]
-    pub type TotalDeurDebt<T> = StorageValue<_, T::Balance, ValueQuery>;
+    pub type TotalDeurDebt<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
     #[pallet::storage]
     pub type OrmUsdPrice<T> = StorageValue<_, u128, ValueQuery>;
@@ -324,7 +325,7 @@ pub mod pallet {
 
             let collateral_value_usd = (cdp.collateral.saturated_into::<u128>())
                 .saturating_mul(orm_usd_price)
-                .saturating_div(1_000_000_000_000_000_000u128);
+                .saturating_div(100_000u128);
 
             let dusd_debt_value = cdp.dusd_debt.saturated_into::<u128>();
             let deur_debt_value_usd = (cdp.deur_debt.saturated_into::<u128>())
@@ -338,7 +339,10 @@ pub mod pallet {
                     .saturating_mul(10000u128)
                     .saturating_div(total_debt_usd);
 
-                ensure!(ratio < T::LiquidationRatio::get() as u128, Error::<T>::CdpNotLiquidatable);
+                ensure!(
+                    ratio < T::LiquidationRatio::get() as u128,
+                    Error::<T>::CdpNotLiquidatable
+                );
             }
 
             T::Currency::unreserve(&cdp_owner, cdp.collateral);
@@ -427,6 +431,30 @@ pub mod pallet {
     }
 
     impl<T: Config> Pallet<T> {
+        pub fn cdps(account: &T::AccountId) -> Option<Cdp<T::Balance>> {
+            Cdps::<T>::get(account)
+        }
+
+        pub fn total_collateral() -> T::Balance {
+            TotalCollateral::<T>::get()
+        }
+
+        pub fn total_dusd_debt() -> T::Balance {
+            TotalDusdDebt::<T>::get()
+        }
+
+        pub fn total_deur_debt() -> T::Balance {
+            TotalDeurDebt::<T>::get()
+        }
+
+        pub fn orm_usd_price() -> u128 {
+            OrmUsdPrice::<T>::get()
+        }
+
+        pub fn orm_eur_price() -> u128 {
+            OrmEurPrice::<T>::get()
+        }
+
         fn check_collateral_ratio(
             _who: &T::AccountId,
             collateral: T::Balance,
@@ -441,7 +469,7 @@ pub mod pallet {
 
             let collateral_value_usd = (collateral.saturated_into::<u128>())
                 .saturating_mul(orm_usd_price)
-                .saturating_div(1_000_000_000_000_000_000u128); // Scale down from 1e18
+                .saturating_div(100_000u128); // Scale down from price format (100,000 = $1.00)
 
             let dusd_debt_value = dusd_debt.saturated_into::<u128>();
             let deur_debt_value_usd = (deur_debt.saturated_into::<u128>())
@@ -455,7 +483,7 @@ pub mod pallet {
             }
 
             let ratio = collateral_value_usd
-                .saturating_mul(10000u128)
+                .saturating_mul(100u128)
                 .saturating_div(total_debt_usd);
 
             Ok(ratio >= T::MinCollateralRatio::get() as u128)

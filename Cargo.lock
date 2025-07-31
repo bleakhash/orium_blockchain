@@ -5139,7 +5139,6 @@ dependencies = [
  "frame-system-benchmarking",
  "frame-system-rpc-runtime-api",
  "frame-try-runtime",
- "getrandom 0.3.3",
  "pallet-babe",
  "pallet-balances",
  "pallet-collateral-engine",

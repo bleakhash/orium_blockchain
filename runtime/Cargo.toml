@@ -19,7 +19,6 @@ workspace = true
 codec = { features = ["derive"], workspace = true }
 scale-info = { features = ["derive", "serde"], workspace = true }
 serde_json = { workspace = true, default-features = false, features = ["alloc"] }
-getrandom = { workspace = true }
 
 
 # frame
@@ -81,7 +80,6 @@ std = [
 	"frame-system-rpc-runtime-api/std",
 	"frame-system/std",
 	"frame-try-runtime?/std",
-	"getrandom/std",
 	"pallet-babe/std",
 	"pallet-balances/std",
 	"pallet-grandpa/std",

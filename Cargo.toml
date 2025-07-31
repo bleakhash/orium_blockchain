@@ -22,7 +22,7 @@ rust.missing_docs = "allow"
 clap = { version = "4.5.3" }
 codec = { version = "3.6.12", package = "parity-scale-codec", default-features = false }
 futures = { version = "0.3.30" }
-getrandom = { version = "0.3" }
+getrandom = { version = "0.3", features = ["wasm_js"] }
 jsonrpsee = { version = "0.24.9", default-features = false }
 proptest = { version = "1.4.0" }
 scale-info = { version = "2.11.1", default-features = false }

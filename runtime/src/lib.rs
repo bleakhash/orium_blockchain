@@ -18,7 +18,7 @@ use sp_runtime::{
 };
 #[cfg(feature = "std")]
 use sp_version::NativeVersion;
-use sp_version::RuntimeVersion;
+use sp_version::{create_runtime_str, RuntimeVersion};
 
 pub use frame_system::Call as SystemCall;
 pub use pallet_balances::Call as BalancesCall;
@@ -53,8 +53,8 @@ pub mod opaque {
 
 impl_opaque_keys! {
     pub struct SessionKeys {
-        pub babe: Babe,
-        pub grandpa: Grandpa,
+        pub babe: sp_consensus_babe::AuthorityId,
+        pub grandpa: sp_consensus_grandpa::AuthorityId,
     }
 }
 
@@ -62,8 +62,8 @@ impl_opaque_keys! {
 // https://docs.substrate.io/main-docs/build/upgrade#runtime-versioning
 #[sp_version::runtime_version]
 pub const VERSION: RuntimeVersion = RuntimeVersion {
-    spec_name: alloc::borrow::Cow::Borrowed("orium-runtime"),
-    impl_name: alloc::borrow::Cow::Borrowed("orium-runtime"),
+    spec_name: create_runtime_str!("orium-runtime"),
+    impl_name: create_runtime_str!("orium-runtime"),
     authoring_version: 1,
     // The version of the runtime specification. A full node will not attempt to use its native
     //   runtime in substitute for the on-chain Wasm runtime unless all of `spec_name`,
@@ -74,7 +74,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
     impl_version: 1,
     apis: apis::RUNTIME_API_VERSIONS,
     transaction_version: 1,
-    system_version: 1,
+    state_version: 1,
 };
 
 mod block_times {
@@ -113,7 +113,7 @@ pub const EXISTENTIAL_DEPOSIT: Balance = MILLI_UNIT;
 #[cfg(feature = "std")]
 pub fn native_version() -> NativeVersion {
     NativeVersion {
-        runtime_version: VERSION,
+        runtime_version: crate::VERSION,
         can_author_with: Default::default(),
     }
 }
@@ -154,7 +154,6 @@ pub type BlockId = generic::BlockId<Block>;
 
 /// The `TransactionExtension` to the basic transaction logic.
 pub type TxExtension = (
-    frame_system::AuthorizeCall<Runtime>,
     frame_system::CheckNonZeroSender<Runtime>,
     frame_system::CheckSpecVersion<Runtime>,
     frame_system::CheckTxVersion<Runtime>,
@@ -163,8 +162,6 @@ pub type TxExtension = (
     frame_system::CheckNonce<Runtime>,
     frame_system::CheckWeight<Runtime>,
     pallet_transaction_payment::ChargeTransactionPayment<Runtime>,
-    frame_metadata_hash_extension::CheckMetadataHash<Runtime>,
-    frame_system::WeightReclaim<Runtime>,
 );
 
 /// Unchecked extrinsic type as expected by this runtime.
@@ -203,8 +200,7 @@ mod runtime {
         RuntimeHoldReason,
         RuntimeSlashReason,
         RuntimeLockId,
-        RuntimeTask,
-        RuntimeViewFunction
+        RuntimeTask
     )]
     pub struct Runtime;
 

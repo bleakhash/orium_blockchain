@@ -1,9 +1,9 @@
-//! Benchmarking setup for pallet-template
+//! Benchmarking setup for pallet-deur
 
 use super::*;
 
 #[allow(unused)]
-use crate::Pallet as Template;
+use crate::Pallet as Deur;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 
@@ -12,24 +12,30 @@ mod benchmarks {
     use super::*;
 
     #[benchmark]
-    fn do_something() {
-        let value = 100u32;
+    fn transfer() {
         let caller: T::AccountId = whitelisted_caller();
-        #[extrinsic_call]
-        do_something(RawOrigin::Signed(caller), value);
+        let to: T::AccountId = account("to", 0, 0);
+        let amount = 1000u32.into();
 
-        assert_eq!(Something::<T>::get(), Some(value));
+        Balances::<T>::insert(&caller, amount * 2u32.into());
+
+        #[extrinsic_call]
+        transfer(RawOrigin::Signed(caller.clone()), to.clone(), amount);
+
+        assert_eq!(Balances::<T>::get(&to), amount);
     }
 
     #[benchmark]
-    fn cause_error() {
-        Something::<T>::put(100u32);
+    fn approve() {
         let caller: T::AccountId = whitelisted_caller();
-        #[extrinsic_call]
-        cause_error(RawOrigin::Signed(caller));
+        let spender: T::AccountId = account("spender", 0, 0);
+        let amount = 1000u32.into();
 
-        assert_eq!(Something::<T>::get(), Some(101u32));
+        #[extrinsic_call]
+        approve(RawOrigin::Signed(caller.clone()), spender.clone(), amount);
+
+        assert_eq!(Allowances::<T>::get(&caller, &spender), amount);
     }
 
-    impl_benchmark_test_suite!(Template, crate::mock::new_test_ext(), crate::mock::Test);
+    impl_benchmark_test_suite!(Deur, crate::mock::new_test_ext(), crate::mock::Test);
 }

@@ -1,5 +1,3 @@
-//!
-
 use frame_support::{
     parameter_types,
     weights::{constants::WEIGHT_REF_TIME_PER_SECOND, Weight},

@@ -1,7 +1,8 @@
-use super::*;
 use crate::{mock::*, Error, Event};
-use frame_support::{assert_noop, assert_ok, traits::Get};
+use frame_support::{assert_noop, assert_ok, traits::Currency};
 use sp_runtime::traits::BadOrigin;
+
+use crate::mock::{CollateralEngine, RuntimeOrigin, System, Test};
 
 #[test]
 fn create_cdp_works() {
@@ -19,7 +20,7 @@ fn create_cdp_works() {
             80_000
         )); // €0.80
 
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
 
         assert_ok!(CollateralEngine::create_cdp(
             RuntimeOrigin::signed(1),
@@ -47,7 +48,7 @@ fn create_cdp_fails_already_exists() {
     new_test_ext().execute_with(|| {
         System::set_block_number(1);
 
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
         assert_ok!(CollateralEngine::update_price(
             RuntimeOrigin::root(),
             b"ORM/USD".to_vec(),
@@ -86,7 +87,7 @@ fn deposit_collateral_works() {
             b"ORM/EUR".to_vec(),
             80_000
         ));
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
         assert_ok!(CollateralEngine::create_cdp(
             RuntimeOrigin::signed(1),
             5_000
@@ -115,7 +116,7 @@ fn deposit_collateral_works() {
 #[test]
 fn deposit_collateral_fails_no_cdp() {
     new_test_ext().execute_with(|| {
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
 
         assert_noop!(
             CollateralEngine::deposit_collateral(RuntimeOrigin::signed(1), 2_000),
@@ -139,7 +140,7 @@ fn mint_dusd_works() {
             b"ORM/EUR".to_vec(),
             80_000
         ));
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
         assert_ok!(CollateralEngine::create_cdp(
             RuntimeOrigin::signed(1),
             5_000
@@ -177,7 +178,7 @@ fn mint_dusd_fails_insufficient_collateral() {
             b"ORM/EUR".to_vec(),
             80_000
         ));
-        let _ = Balances::deposit_creating(&1, 2_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 2_000);
         assert_ok!(CollateralEngine::create_cdp(
             RuntimeOrigin::signed(1),
             1_000
@@ -205,7 +206,7 @@ fn withdraw_collateral_works() {
             b"ORM/EUR".to_vec(),
             80_000
         ));
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
         assert_ok!(CollateralEngine::create_cdp(
             RuntimeOrigin::signed(1),
             5_000
@@ -244,7 +245,7 @@ fn withdraw_collateral_fails_with_debt() {
             b"ORM/EUR".to_vec(),
             80_000
         ));
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
         assert_ok!(CollateralEngine::create_cdp(
             RuntimeOrigin::signed(1),
             5_000
@@ -320,7 +321,7 @@ fn collateral_ratio_calculation_works() {
             80_000
         )); // €0.80
 
-        let _ = Balances::deposit_creating(&1, 10_000);
+        let _ = <Test as crate::Config>::Currency::deposit_creating(&1, 10_000);
         assert_ok!(CollateralEngine::create_cdp(
             RuntimeOrigin::signed(1),
             5_000

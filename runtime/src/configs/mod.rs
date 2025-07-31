@@ -26,7 +26,7 @@
 // Substrate and Polkadot dependencies
 use frame_support::{
     derive_impl, parameter_types,
-    traits::{ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, VariantCountOf},
+    traits::{ConstU128, ConstU32, ConstU64, ConstU8, VariantCountOf},
     weights::{
         constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
         IdentityFee, Weight,
@@ -34,22 +34,22 @@ use frame_support::{
 };
 use frame_system::limits::{BlockLength, BlockWeights};
 use pallet_transaction_payment::{ConstFeeMultiplier, FungibleAdapter, Multiplier};
-use sp_consensus_babe::AuthorityId as BabeId;
 use sp_runtime::{traits::One, Perbill};
 use sp_version::RuntimeVersion;
 
 // Local module imports
 use super::{
-    tps_config, AccountId, Babe, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo,
-    Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin,
-    RuntimeTask, System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION,
+    AccountId, Babe, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo, Runtime,
+    RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin, RuntimeTask,
+    System, EXISTENTIAL_DEPOSIT, SLOT_DURATION,
 };
 
 const NORMAL_DISPATCH_RATIO: Perbill = Perbill::from_percent(75);
 
 parameter_types! {
     pub const BlockHashCount: BlockNumber = 2400;
-    pub const Version: RuntimeVersion = VERSION;
+    pub const EpochDuration: u64 = SLOT_DURATION * 5;
+    pub const Version: RuntimeVersion = crate::VERSION;
 
     /// Optimized for high TPS: 4 seconds of compute with a 2 second average block time.
     pub RuntimeBlockWeights: BlockWeights = BlockWeights::with_sensible_defaults(
@@ -139,7 +139,6 @@ impl pallet_balances::Config for Runtime {
     type MaxFreezes = VariantCountOf<RuntimeFreezeReason>;
     type RuntimeHoldReason = RuntimeHoldReason;
     type RuntimeFreezeReason = RuntimeFreezeReason;
-    type DoneSlashHandler = ();
 }
 
 parameter_types! {
@@ -153,7 +152,6 @@ impl pallet_transaction_payment::Config for Runtime {
     type WeightToFee = IdentityFee<Balance>;
     type LengthToFee = IdentityFee<Balance>;
     type FeeMultiplierUpdate = ConstFeeMultiplier<FeeMultiplier>;
-    type WeightInfo = pallet_transaction_payment::weights::SubstrateWeight<Runtime>;
 }
 
 impl pallet_sudo::Config for Runtime {

@@ -7,9 +7,8 @@
 
 use std::sync::Arc;
 
-use jsonrpsee::RpcModule;
+use orium_runtime::{opaque::Block, AccountId, Balance, Nonce};
 use sc_transaction_pool_api::TransactionPool;
-use solochain_template_runtime::{opaque::Block, AccountId, Balance, Nonce};
 use sp_api::ProvideRuntimeApi;
 use sp_block_builder::BlockBuilder;
 use sp_blockchain::{Error as BlockChainError, HeaderBackend, HeaderMetadata};
@@ -23,9 +22,10 @@ pub struct FullDeps<C, P> {
 }
 
 /// Instantiate all full RPC extensions.
+#[allow(clippy::result_large_err)]
 pub fn create_full<C, P>(
     deps: FullDeps<C, P>,
-) -> Result<RpcModule<()>, Box<dyn std::error::Error + Send + Sync>>
+) -> Result<jsonrpsee::RpcModule<()>, sc_service::Error>
 where
     C: ProvideRuntimeApi<Block>,
     C: HeaderBackend<Block> + HeaderMetadata<Block, Error = BlockChainError> + 'static,
@@ -35,14 +35,14 @@ where
     C::Api: BlockBuilder<Block>,
     P: TransactionPool + 'static,
 {
-    use pallet_transaction_payment_rpc::{TransactionPayment, TransactionPaymentApiServer};
-    use substrate_frame_rpc_system::{System, SystemApiServer};
+    let module = jsonrpsee::RpcModule::new(());
+    let FullDeps {
+        client: _client,
+        pool: _pool,
+    } = deps;
 
-    let mut module = RpcModule::new(());
-    let FullDeps { client, pool } = deps;
-
-    module.merge(System::new(client.clone(), pool).into_rpc())?;
-    module.merge(TransactionPayment::new(client).into_rpc())?;
+    // module.merge(System::new(client.clone(), pool).into_rpc())?;
+    // module.merge(TransactionPayment::new(client).into_rpc())?;
 
     // Extend this RPC with a custom API by using the following syntax.
     // `YourRpcStruct` should have a reference to a client, which is needed

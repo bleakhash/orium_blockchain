@@ -1,7 +1,8 @@
-use super::*;
 use crate::{mock::*, Error, Event};
-use frame_support::{assert_noop, assert_ok, traits::Get};
+use frame_support::{assert_noop, assert_ok};
 use sp_runtime::traits::BadOrigin;
+
+use crate::mock::{OriumToken, RuntimeOrigin, System};
 
 #[test]
 fn mint_works() {
@@ -13,7 +14,7 @@ fn mint_works() {
 
         // Check that the correct event was deposited
         System::assert_last_event(
-            Event::Minted {
+            Event::Mint {
                 to: 1,
                 amount: 1000,
             }
@@ -48,7 +49,7 @@ fn transfer_works() {
         assert_eq!(OriumToken::balance_of(&2), 500);
 
         System::assert_last_event(
-            Event::Transferred {
+            Event::Transfer {
                 from: 1,
                 to: 2,
                 amount: 500,
@@ -81,7 +82,7 @@ fn burn_works() {
         assert_eq!(OriumToken::total_supply(), 700);
 
         System::assert_last_event(
-            Event::Burned {
+            Event::Burn {
                 from: 1,
                 amount: 300,
             }

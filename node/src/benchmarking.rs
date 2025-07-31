@@ -4,10 +4,10 @@
 
 use crate::service::FullClient;
 
+use orium_runtime as runtime;
 use runtime::{AccountId, Balance, BalancesCall, SystemCall};
 use sc_cli::Result;
 use sc_client_api::BlockBackend;
-use solochain_template_runtime as runtime;
 use sp_core::{Encode, Pair};
 use sp_inherents::{InherentData, InherentDataProvider};
 use sp_keyring::Sr25519Keyring;
@@ -121,7 +121,6 @@ pub fn create_benchmark_extrinsic(
         .map(|c| c / 2)
         .unwrap_or(2) as u64;
     let tx_ext: runtime::TxExtension = (
-        frame_system::AuthorizeCall::<runtime::Runtime>::new(),
         frame_system::CheckNonZeroSender::<runtime::Runtime>::new(),
         frame_system::CheckSpecVersion::<runtime::Runtime>::new(),
         frame_system::CheckTxVersion::<runtime::Runtime>::new(),
@@ -133,8 +132,6 @@ pub fn create_benchmark_extrinsic(
         frame_system::CheckNonce::<runtime::Runtime>::from(nonce),
         frame_system::CheckWeight::<runtime::Runtime>::new(),
         pallet_transaction_payment::ChargeTransactionPayment::<runtime::Runtime>::from(0),
-        frame_metadata_hash_extension::CheckMetadataHash::<runtime::Runtime>::new(false),
-        frame_system::WeightReclaim::<runtime::Runtime>::new(),
     );
 
     let raw_payload = runtime::SignedPayload::from_raw(
@@ -142,15 +139,12 @@ pub fn create_benchmark_extrinsic(
         tx_ext.clone(),
         (
             (),
-            (),
             runtime::VERSION.spec_version,
             runtime::VERSION.transaction_version,
             genesis_hash,
             best_hash,
             (),
             (),
-            (),
-            None,
             (),
         ),
     );
@@ -167,6 +161,7 @@ pub fn create_benchmark_extrinsic(
 /// Generates inherent data for the `benchmark overhead` command.
 ///
 /// Note: Should only be used for benchmarking.
+#[allow(clippy::result_large_err)]
 pub fn inherent_benchmark_data() -> Result<InherentData> {
     let mut inherent_data = InherentData::new();
     let d = Duration::from_millis(0);

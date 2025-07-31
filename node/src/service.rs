@@ -3,12 +3,11 @@
 use futures::FutureExt;
 use orium_runtime::{self, apis::RuntimeApi, opaque::Block};
 use sc_client_api::{Backend, BlockBackend};
-use sc_consensus_babe::{BabeBlockImport, BabeLink, BabeParams};
+use sc_consensus_babe::{BabeBlockImport, BabeLink};
 use sc_consensus_grandpa::SharedVoterState;
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager, WarpSyncConfig};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
-use sp_consensus_babe::AuthorityPair as BabePair;
 use std::{sync::Arc, time::Duration};
 
 pub(crate) type FullClient = sc_service::TFullClient<
@@ -28,7 +27,7 @@ pub type Service = sc_service::PartialComponents<
     FullBackend,
     FullSelectChain,
     sc_consensus::DefaultImportQueue<Block>,
-    sc_transaction_pool::TransactionPoolHandle<Block, FullClient>,
+    sc_transaction_pool::FullPool<Block, FullClient>,
     (
         BabeBlockImport<
             Block,
@@ -46,6 +45,7 @@ pub type Service = sc_service::PartialComponents<
     ),
 >;
 
+#[allow(clippy::result_large_err)]
 pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
     let telemetry = config
         .telemetry_endpoints
@@ -76,15 +76,12 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 
     let select_chain = sc_consensus::LongestChain::new(backend.clone());
 
-    let transaction_pool = Arc::from(
-        sc_transaction_pool::Builder::new(
-            task_manager.spawn_essential_handle(),
-            client.clone(),
-            config.role.is_authority().into(),
-        )
-        .with_options(config.transaction_pool.clone())
-        .with_prometheus(config.prometheus_registry())
-        .build(),
+    let transaction_pool = sc_transaction_pool::BasicPool::new_full(
+        config.transaction_pool.clone(),
+        config.role.is_authority().into(),
+        config.prometheus_registry(),
+        task_manager.spawn_essential_handle(),
+        client.clone(),
     );
 
     let (grandpa_block_import, grandpa_link) = sc_consensus_grandpa::block_import(
@@ -97,7 +94,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 
     let (babe_block_import, babe_link) = sc_consensus_babe::block_import(
         sc_consensus_babe::configuration(&*client)?,
-        grandpa_block_import,
+        grandpa_block_import.clone(),
         client.clone(),
     )?;
 
@@ -105,16 +102,17 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
     let import_queue = sc_consensus_babe::import_queue(sc_consensus_babe::ImportQueueParams {
         link: babe_link.clone(),
         block_import: babe_block_import.clone(),
-        justification_import: Some(Box::new(babe_block_import.clone())),
+        justification_import: Some(Box::new(grandpa_block_import.clone())),
         client: client.clone(),
         select_chain: select_chain.clone(),
-        create_inherent_data_providers: move |parent_hash, _| {
-            let cidp_client = cidp_client.clone();
+        offchain_tx_pool_factory: OffchainTransactionPoolFactory::new(transaction_pool.clone()),
+        create_inherent_data_providers: move |_parent_hash, _| {
+            let _cidp_client = cidp_client.clone();
             async move {
                 let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
                 let slot = sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 					*timestamp,
-					std::time::Duration::from_millis(orium_runtime::SLOT_DURATION),
+					sp_consensus_babe::SlotDuration::from_millis(orium_runtime::SLOT_DURATION),
 				);
                 Ok((slot, timestamp))
             }
@@ -128,7 +126,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
         client,
         backend,
         task_manager,
-        import_queue,
+        import_queue: import_queue.0,
         keystore_container,
         select_chain,
         transaction_pool,
@@ -137,6 +135,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 }
 
 /// Builds a new service for a full client.
+#[allow(clippy::result_large_err)]
 pub fn new_full<
     N: sc_network::NetworkBackend<Block, <Block as sp_runtime::traits::Block>::Hash>,
 >(
@@ -183,7 +182,7 @@ pub fn new_full<
         Vec::default(),
     ));
 
-    let (network, system_rpc_tx, tx_handler_controller, sync_service) =
+    let (network, system_rpc_tx, tx_handler_controller, _network_starter, sync_service) =
         sc_service::build_network(sc_service::BuildNetworkParams {
             config: &config,
             net_config,
@@ -210,7 +209,7 @@ pub fn new_full<
                 network_provider: Arc::new(network.clone()),
                 enable_http_requests: true,
                 custom_extensions: |_| vec![],
-            })?;
+            });
         task_manager.spawn_handle().spawn(
             "offchain-workers-runner",
             "offchain-worker",
@@ -236,7 +235,7 @@ pub fn new_full<
                 client: client.clone(),
                 pool: pool.clone(),
             };
-            crate::rpc::create_full(deps).map_err(Into::into)
+            crate::rpc::create_full(deps)
         })
     };
 
@@ -276,7 +275,7 @@ pub fn new_full<
                 let timestamp = sp_timestamp::InherentDataProvider::from_system_time();
                 let slot = sp_consensus_babe::inherents::InherentDataProvider::from_timestamp_and_slot_duration(
 					*timestamp,
-					std::time::Duration::from_millis(orium_runtime::SLOT_DURATION),
+					sp_consensus_babe::SlotDuration::from_millis(orium_runtime::SLOT_DURATION),
 				);
                 Ok((slot, timestamp))
             },
@@ -327,8 +326,8 @@ pub fn new_full<
         let grandpa_config = sc_consensus_grandpa::GrandpaParams {
             config: grandpa_config,
             link: grandpa_link,
-            network,
-            sync: Arc::new(sync_service),
+            network: Arc::new(network),
+            sync: sync_service.clone(),
             notification_service: grandpa_notification_service,
             voting_rule: sc_consensus_grandpa::VotingRulesBuilder::default().build(),
             prometheus_registry,

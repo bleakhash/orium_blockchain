@@ -15,42 +15,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-use crate::{AccountId, BalancesConfig, RuntimeGenesisConfig, SudoConfig};
+use crate::AccountId;
 use alloc::{vec, vec::Vec};
-use frame_support::build_struct_json_patch;
+use serde_json;
 use serde_json::Value;
-use sp_consensus_aura::sr25519::AuthorityId as AuraId;
+use sp_consensus_babe::AuthorityId as BabeId;
 use sp_consensus_grandpa::AuthorityId as GrandpaId;
 use sp_genesis_builder::{self, PresetId};
 use sp_keyring::Sr25519Keyring;
 
 // Returns the genesis config presets populated with given parameters.
 fn testnet_genesis(
-    initial_authorities: Vec<(AuraId, GrandpaId)>,
+    initial_authorities: Vec<(BabeId, GrandpaId)>,
     endowed_accounts: Vec<AccountId>,
     root: AccountId,
 ) -> Value {
-    build_struct_json_patch!(RuntimeGenesisConfig {
-        balances: BalancesConfig {
-            balances: endowed_accounts
+    serde_json::json!({
+        "balances": {
+            "balances": endowed_accounts
                 .iter()
                 .cloned()
                 .map(|k| (k, 1u128 << 60))
-                .collect::<Vec<_>>(),
+                .collect::<Vec<_>>()
         },
-        aura: pallet_aura::GenesisConfig {
-            authorities: initial_authorities
+        "babe": {
+            "authorities": initial_authorities
                 .iter()
-                .map(|x| (x.0.clone()))
+                .map(|x| (x.0.clone(), 1))
                 .collect::<Vec<_>>(),
+            "epochConfig": {
+                "c": [3, 10],
+                "allowedSlots": "PrimaryAndSecondaryPlainSlots"
+            }
         },
-        grandpa: pallet_grandpa::GenesisConfig {
-            authorities: initial_authorities
+        "grandpa": {
+            "authorities": initial_authorities
                 .iter()
                 .map(|x| (x.1.clone(), 1))
-                .collect::<Vec<_>>(),
+                .collect::<Vec<_>>()
         },
-        sudo: SudoConfig { key: Some(root) },
+        "sudo": {
+            "key": root
+        }
     })
 }
 
@@ -94,9 +100,9 @@ pub fn local_config_genesis() -> Value {
 
 /// Provides the JSON representation of predefined genesis config for given `id`.
 pub fn get_preset(id: &PresetId) -> Option<Vec<u8>> {
-    let patch = match id.as_ref() {
-        sp_genesis_builder::DEV_RUNTIME_PRESET => development_config_genesis(),
-        sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET => local_config_genesis(),
+    let patch = match id.try_into() {
+        Ok(sp_genesis_builder::DEV_RUNTIME_PRESET) => development_config_genesis(),
+        Ok(sp_genesis_builder::LOCAL_TESTNET_RUNTIME_PRESET) => local_config_genesis(),
         _ => return None,
     };
     Some(

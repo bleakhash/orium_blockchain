@@ -54,15 +54,9 @@ pub use weights::*;
 pub mod pallet {
     // Import various useful types required by all FRAME pallets.
     use super::*;
-    use frame_support::{
-        pallet_prelude::*,
-        traits::{Get, StorageVersion},
-    };
+    use frame_support::pallet_prelude::*;
     use frame_system::pallet_prelude::*;
-    use sp_runtime::traits::{
-        AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating, Zero,
-    };
-    use sp_std::fmt::Debug;
+    use sp_runtime::traits::{AtLeast32BitUnsigned, MaybeSerializeDeserialize, Member, Saturating};
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
@@ -91,7 +85,7 @@ pub mod pallet {
     }
 
     #[pallet::storage]
-    pub type TotalSupply<T> = StorageValue<_, T::Balance, ValueQuery>;
+    pub type TotalSupply<T: Config> = StorageValue<_, T::Balance, ValueQuery>;
 
     #[pallet::storage]
     pub type Balances<T: Config> =
@@ -246,6 +240,20 @@ pub mod pallet {
             Self::deposit_event(Event::Transfer { from, to, amount });
 
             Ok(())
+        }
+    }
+
+    impl<T: Config> Pallet<T> {
+        pub fn balance_of(account: &T::AccountId) -> T::Balance {
+            Balances::<T>::get(account)
+        }
+
+        pub fn total_supply() -> T::Balance {
+            TotalSupply::<T>::get()
+        }
+
+        pub fn allowance(owner: &T::AccountId, spender: &T::AccountId) -> T::Balance {
+            Allowances::<T>::get(owner, spender)
         }
     }
 }

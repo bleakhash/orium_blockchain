@@ -51,7 +51,6 @@ sp-runtime = { workspace = true, default-features = true }
 sp-timestamp = { workspace = true, default-features = true }
 
 # frame and pallets
-frame-metadata-hash-extension = { workspace = true, default-features = true }
 frame-system = { workspace = true, default-features = true }
 pallet-transaction-payment = { workspace = true, default-features = true }
 pallet-transaction-payment-rpc = { workspace = true, default-features = true }
@@ -83,5 +82,4 @@ try-runtime = [
 	"frame-system/try-runtime",
 	"pallet-transaction-payment/try-runtime",
 	"orium-runtime/try-runtime",
-	"sp-runtime/try-runtime",
 ]

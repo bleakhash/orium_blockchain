@@ -1,14 +1,12 @@
-use crate as pallet_template;
+use crate as pallet_deur;
 use frame_support::derive_impl;
-use sp_runtime::BuildStorage;
+use sp_runtime::{traits::IdentityLookup, BuildStorage};
 
 type Block = frame_system::mocking::MockBlock<Test>;
 
 #[frame_support::runtime]
-mod runtime {
-    // The main runtime
+pub mod runtime {
     #[runtime::runtime]
-    // Runtime Types to be generated
     #[runtime::derive(
         RuntimeCall,
         RuntimeEvent,
@@ -18,8 +16,7 @@ mod runtime {
         RuntimeHoldReason,
         RuntimeSlashReason,
         RuntimeLockId,
-        RuntimeTask,
-        RuntimeViewFunction
+        RuntimeTask
     )]
     pub struct Test;
 
@@ -27,17 +24,20 @@ mod runtime {
     pub type System = frame_system::Pallet<Test>;
 
     #[runtime::pallet_index(1)]
-    pub type Template = pallet_template::Pallet<Test>;
+    pub type Deur = pallet_deur::Pallet<Test>;
 }
 
 #[derive_impl(frame_system::config_preludes::TestDefaultConfig)]
 impl frame_system::Config for Test {
     type Block = Block;
+    type AccountId = u64;
+    type Lookup = IdentityLookup<Self::AccountId>;
 }
 
-impl pallet_template::Config for Test {
+impl pallet_deur::Config for Test {
     type RuntimeEvent = RuntimeEvent;
     type WeightInfo = ();
+    type Balance = u128;
 }
 
 // Build genesis storage according to the mock runtime.

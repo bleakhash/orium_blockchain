@@ -1,9 +1,9 @@
-//! Benchmarking setup for pallet-template
+//! Benchmarking setup for pallet-collateral-engine
 
 use super::*;
 
 #[allow(unused)]
-use crate::Pallet as Template;
+use crate::Pallet as CollateralEngine;
 use frame_benchmarking::v2::*;
 use frame_system::RawOrigin;
 
@@ -12,24 +12,35 @@ mod benchmarks {
     use super::*;
 
     #[benchmark]
-    fn do_something() {
-        let value = 100u32;
+    fn create_cdp() {
         let caller: T::AccountId = whitelisted_caller();
+        let collateral_amount = 1000u32.into();
         #[extrinsic_call]
-        do_something(RawOrigin::Signed(caller), value);
+        create_cdp(RawOrigin::Signed(caller.clone()), collateral_amount);
 
-        assert_eq!(Something::<T>::get(), Some(value));
+        assert!(Cdps::<T>::contains_key(&caller));
     }
 
     #[benchmark]
-    fn cause_error() {
-        Something::<T>::put(100u32);
+    fn deposit_collateral() {
         let caller: T::AccountId = whitelisted_caller();
-        #[extrinsic_call]
-        cause_error(RawOrigin::Signed(caller));
+        let collateral_amount = 1000u32.into();
+        let _ = CollateralEngine::<T>::create_cdp(
+            RawOrigin::Signed(caller.clone()).into(),
+            collateral_amount,
+        );
 
-        assert_eq!(Something::<T>::get(), Some(101u32));
+        let additional_amount = 500u32.into();
+        #[extrinsic_call]
+        deposit_collateral(RawOrigin::Signed(caller.clone()), additional_amount);
+
+        let cdp = Cdps::<T>::get(&caller).unwrap();
+        assert!(cdp.collateral >= (collateral_amount + additional_amount));
     }
 
-    impl_benchmark_test_suite!(Template, crate::mock::new_test_ext(), crate::mock::Test);
+    impl_benchmark_test_suite!(
+        CollateralEngine,
+        crate::mock::new_test_ext(),
+        crate::mock::Test
+    );
 }

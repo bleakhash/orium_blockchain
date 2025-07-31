@@ -23,7 +23,7 @@ pub enum Subcommand {
     BuildSpec(sc_cli::BuildSpecCmd),
 
     /// Export the chain specification.
-    ExportChainSpec(sc_cli::ExportChainSpecCmd),
+    ExportChainSpec(sc_cli::BuildSpecCmd),
 
     /// Validate blocks.
     CheckBlock(sc_cli::CheckBlockCmd),

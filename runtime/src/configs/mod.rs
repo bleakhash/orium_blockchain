@@ -26,7 +26,7 @@
 // Substrate and Polkadot dependencies
 use frame_support::{
     derive_impl, parameter_types,
-    traits::{ConstBool, ConstU128, ConstU32, ConstU64, ConstU8, VariantCountOf},
+    traits::{ConstU128, ConstU32, ConstU64, ConstU8, VariantCountOf},
     weights::{
         constants::{RocksDbWeight, WEIGHT_REF_TIME_PER_SECOND},
         IdentityFee, Weight,
@@ -34,13 +34,12 @@ use frame_support::{
 };
 use frame_system::limits::{BlockLength, BlockWeights};
 use pallet_transaction_payment::{ConstFeeMultiplier, FungibleAdapter, Multiplier};
-use sp_consensus_babe::AuthorityId as BabeId;
 use sp_runtime::{traits::One, Perbill};
 use sp_version::RuntimeVersion;
 
 // Local module imports
 use super::{
-    tps_config, AccountId, Babe, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo,
+    AccountId, Babe, Balance, Balances, Block, BlockNumber, Hash, Nonce, PalletInfo,
     Runtime, RuntimeCall, RuntimeEvent, RuntimeFreezeReason, RuntimeHoldReason, RuntimeOrigin,
     RuntimeTask, System, EXISTENTIAL_DEPOSIT, SLOT_DURATION, VERSION,
 };

@@ -1,6 +1,5 @@
-use super::*;
 use crate::{mock::*, Error, Event};
-use frame_support::{assert_noop, assert_ok, traits::Get};
+use frame_support::{assert_noop, assert_ok};
 use sp_runtime::traits::BadOrigin;
 
 #[test]

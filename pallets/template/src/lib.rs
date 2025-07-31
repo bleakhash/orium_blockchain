@@ -62,6 +62,7 @@ pub use weights::*;
 
 // All pallet logic is defined in its own module and must be annotated by the `pallet` attribute.
 #[frame_support::pallet]
+#[allow(clippy::manual_inspect)]
 pub mod pallet {
     // Import various useful types required by all FRAME pallets.
     use super::*;
@@ -70,6 +71,7 @@ pub mod pallet {
 
     // The `Pallet` struct serves as a placeholder to implement traits, methods and dispatchables
     // (`Call`s) in this pallet.
+    #[allow(clippy::manual_inspect)]
     #[pallet::pallet]
     pub struct Pallet<T>(_);
 

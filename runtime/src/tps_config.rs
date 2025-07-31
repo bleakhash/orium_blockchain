@@ -1,4 +1,3 @@
-//!
 
 use frame_support::{
     parameter_types,

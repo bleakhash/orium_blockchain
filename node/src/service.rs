@@ -3,12 +3,11 @@
 use futures::FutureExt;
 use orium_runtime::{self, apis::RuntimeApi, opaque::Block};
 use sc_client_api::{Backend, BlockBackend};
-use sc_consensus_babe::{BabeBlockImport, BabeLink, BabeParams};
+use sc_consensus_babe::{BabeBlockImport, BabeLink};
 use sc_consensus_grandpa::SharedVoterState;
 use sc_service::{error::Error as ServiceError, Configuration, TaskManager, WarpSyncConfig};
 use sc_telemetry::{Telemetry, TelemetryWorker};
 use sc_transaction_pool_api::OffchainTransactionPoolFactory;
-use sp_consensus_babe::AuthorityPair as BabePair;
 use std::{sync::Arc, time::Duration};
 
 pub(crate) type FullClient = sc_service::TFullClient<
@@ -46,6 +45,7 @@ pub type Service = sc_service::PartialComponents<
     ),
 >;
 
+#[allow(clippy::result_large_err)]
 pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
     let telemetry = config
         .telemetry_endpoints
@@ -137,6 +137,7 @@ pub fn new_partial(config: &Configuration) -> Result<Service, ServiceError> {
 }
 
 /// Builds a new service for a full client.
+#[allow(clippy::result_large_err)]
 pub fn new_full<
     N: sc_network::NetworkBackend<Block, <Block as sp_runtime::traits::Block>::Hash>,
 >(
